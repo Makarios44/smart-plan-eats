@@ -33,7 +33,9 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [meals, setMeals] = useState<Meal[]>([]);
+  const [todayPlan, setTodayPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [addingMeals, setAddingMeals] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -79,6 +81,7 @@ const Dashboard = () => {
         .from("meal_plans")
         .select(`
           id,
+          plan_name,
           meals (
             id,
             name,
@@ -96,14 +99,56 @@ const Dashboard = () => {
         .eq("plan_date", today)
         .maybeSingle();
 
-      if (planData && planData.meals) {
-        setMeals(planData.meals as any);
+      if (planData) {
+        setTodayPlan(planData);
+        if (planData.meals) {
+          setMeals(planData.meals as any);
+        }
       }
     } catch (error: any) {
       console.error("Error loading data:", error);
       toast.error("Erro ao carregar dados");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddMealsToExistingPlan = async () => {
+    if (!todayPlan) return;
+    
+    setAddingMeals(true);
+    
+    try {
+      const defaultMeals = [
+        { name: 'Café da Manhã', time: '07:00', meal_order: 1 },
+        { name: 'Lanche da Manhã', time: '10:00', meal_order: 2 },
+        { name: 'Almoço', time: '12:30', meal_order: 3 },
+        { name: 'Lanche da Tarde', time: '15:30', meal_order: 4 },
+        { name: 'Jantar', time: '19:00', meal_order: 5 },
+        { name: 'Ceia', time: '21:30', meal_order: 6 },
+      ];
+
+      const mealsToInsert = defaultMeals.map(meal => ({
+        meal_plan_id: todayPlan.id,
+        name: meal.name,
+        time: meal.time,
+        meal_order: meal.meal_order,
+        completed: false
+      }));
+
+      const { error } = await supabase
+        .from('meals')
+        .insert(mealsToInsert);
+
+      if (error) throw error;
+      
+      toast.success("Refeições criadas com sucesso!");
+      loadData();
+    } catch (error: any) {
+      console.error("Error adding meals:", error);
+      toast.error("Erro ao criar refeições");
+    } finally {
+      setAddingMeals(false);
     }
   };
 
@@ -244,24 +289,56 @@ const Dashboard = () => {
           </div>
           
           {meals.length === 0 ? (
-            <div className="text-center py-8">
-              <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <p className="text-muted-foreground mb-2">
-                Você ainda não tem um plano para hoje
-              </p>
-              <p className="text-sm text-muted-foreground mb-6">
-                Crie um plano alimentar para começar a acompanhar suas refeições
-              </p>
-              <GeneratePlanDialog 
-                onPlanCreated={loadData}
-                trigger={
-                  <Button size="lg">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Criar Plano de Hoje
-                  </Button>
-                }
-              />
-            </div>
+            todayPlan ? (
+              // Plano existe mas sem refeições
+              <div className="text-center py-8">
+                <Calendar className="w-16 h-16 mx-auto mb-4 text-primary opacity-50" />
+                <h4 className="font-semibold mb-2">Plano "{todayPlan.plan_name}" criado!</h4>
+                <p className="text-muted-foreground mb-2">
+                  Agora vamos adicionar as refeições do dia
+                </p>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Crie 6 refeições padrão para começar a montar seu cardápio
+                </p>
+                <Button 
+                  size="lg"
+                  onClick={handleAddMealsToExistingPlan}
+                  disabled={addingMeals}
+                >
+                  {addingMeals ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      Criando refeições...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Criar Refeições do Dia
+                    </>
+                  )}
+                </Button>
+              </div>
+            ) : (
+              // Nenhum plano para hoje
+              <div className="text-center py-8">
+                <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <p className="text-muted-foreground mb-2">
+                  Você ainda não tem um plano para hoje
+                </p>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Crie um plano alimentar para começar a acompanhar suas refeições
+                </p>
+                <GeneratePlanDialog 
+                  onPlanCreated={loadData}
+                  trigger={
+                    <Button size="lg">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Criar Plano de Hoje
+                    </Button>
+                  }
+                />
+              </div>
+            )
           ) : (
             <div className="space-y-3">
               {meals.map((meal) => {
