@@ -165,8 +165,8 @@ const Onboarding = () => {
       const tdee = calculateTDEE();
       const macros = calculateMacros(tdee);
 
-      // Save profile to database
-      const { error: profileError } = await supabase.from("profiles").insert({
+      // Save profile to database (upsert to handle duplicates)
+      const { error: profileError } = await supabase.from("profiles").upsert({
         user_id: user.id,
         name: formData.name,
         age: parseInt(formData.age),
@@ -183,6 +183,8 @@ const Onboarding = () => {
         target_protein: macros.protein,
         target_carbs: macros.carbs,
         target_fats: macros.fats,
+      }, {
+        onConflict: 'user_id'
       });
 
       if (profileError) throw profileError;
