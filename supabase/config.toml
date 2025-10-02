@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.suggest-meal-alternatives]
 verify_jwt = true
+
+[functions.predict-patterns]
+verify_jwt = true

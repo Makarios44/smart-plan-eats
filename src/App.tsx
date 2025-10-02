@@ -16,6 +16,7 @@ import RestricoesDietarias from "./pages/RestricoesDietarias";
 import HistoricoAjustes from "./pages/HistoricoAjustes";
 import MinhaDespensa from "./pages/MinhaDespensa";
 import SugestoesIA from "./pages/SugestoesIA";
+import Insights from "./pages/Insights";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/historico-ajustes" element={<HistoricoAjustes />} />
           <Route path="/despensa" element={<MinhaDespensa />} />
           <Route path="/sugestoes-ia" element={<SugestoesIA />} />
+          <Route path="/insights" element={<Insights />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
