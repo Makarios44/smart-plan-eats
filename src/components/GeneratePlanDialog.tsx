@@ -27,60 +27,95 @@ export function GeneratePlanDialog({ onPlanCreated, trigger }: GeneratePlanDialo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.plan_name) {
+    // Validate plan name
+    if (!formData.plan_name?.trim()) {
       toast.error("Por favor, dê um nome ao plano");
+      return;
+    }
+
+    if (formData.plan_name.trim().length > 200) {
+      toast.error("O nome do plano deve ter no máximo 200 caracteres");
+      return;
+    }
+
+    if (formData.plan_description && formData.plan_description.length > 1000) {
+      toast.error("A descrição deve ter no máximo 1000 caracteres");
       return;
     }
 
     setLoading(true);
 
     try {
-      // Get the current session
+      // Verify authentication
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (sessionError || !session) {
-        toast.error("Você precisa estar autenticado para criar um plano");
-        console.error("Session error:", sessionError);
+      if (sessionError) {
+        console.error("Erro ao obter sessão:", sessionError);
+        toast.error("Erro de autenticação. Por favor, faça login novamente.");
         return;
       }
 
-      console.log("Criando plano com dados:", formData);
-      console.log("Token de autenticação presente:", !!session.access_token);
+      if (!session) {
+        toast.error("Você precisa estar autenticado para criar um plano");
+        return;
+      }
+
+      console.log("Enviando dados para criar plano:", {
+        plan_name: formData.plan_name.trim(),
+        diet_type: formData.diet_type,
+        plan_date: formData.plan_date,
+        has_description: !!formData.plan_description
+      });
       
+      // Call edge function
       const { data, error } = await supabase.functions.invoke('create-diet-plan', {
-        body: formData
+        body: {
+          plan_name: formData.plan_name.trim(),
+          plan_description: formData.plan_description?.trim() || null,
+          diet_type: formData.diet_type,
+          plan_date: formData.plan_date
+        }
       });
 
-      console.log("Resposta do edge function:", { data, error });
+      console.log("Resposta recebida:", { data, error });
 
+      // Check for network/invocation errors
       if (error) {
-        console.error("Erro do edge function:", error);
-        throw new Error(`Erro na chamada: ${error.message}`);
+        console.error("Erro na chamada da Edge Function:", error);
+        toast.error(`Erro ao criar plano: ${error.message}`);
+        return;
       }
 
+      // Check for application errors in response
       if (data?.error) {
-        console.error("Erro retornado pelo edge function:", data.error);
-        throw new Error(data.error);
+        console.error("Erro retornado pela Edge Function:", data.error);
+        toast.error(data.error);
+        return;
       }
 
-      if (data?.success) {
+      // Check for success
+      if (data?.success && data?.plan) {
         console.log("Plano criado com sucesso:", data.plan);
         toast.success("Plano criado com sucesso!");
-        setOpen(false);
+        
+        // Reset form
         setFormData({
           plan_name: "",
           plan_description: "",
           diet_type: "manutencao",
           plan_date: new Date().toISOString().split('T')[0]
         });
+        
+        setOpen(false);
         onPlanCreated?.();
       } else {
-        throw new Error("Resposta inesperada do servidor");
+        console.error("Resposta inesperada:", data);
+        toast.error("Erro: resposta inesperada do servidor");
       }
+
     } catch (error: any) {
-      console.error("Erro completo ao criar plano:", error);
-      const errorMsg = error.message || "Erro ao criar plano. Tente novamente.";
-      toast.error(errorMsg);
+      console.error("Erro não tratado ao criar plano:", error);
+      toast.error(error.message || "Erro inesperado ao criar plano");
     } finally {
       setLoading(false);
     }

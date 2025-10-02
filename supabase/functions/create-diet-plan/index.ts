@@ -7,66 +7,124 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const authHeader = req.headers.get('Authorization');
+    // Get environment variables
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
 
-    if (!authHeader) {
-      console.error('No authorization header provided');
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Missing environment variables');
       return new Response(
-        JSON.stringify({ error: 'Authorization header is required' }), 
+        JSON.stringify({ error: 'Server configuration error' }), 
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('No authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Authorization required' }), 
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create client with service role key for admin operations
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    // Create Supabase client with user's token
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false }
+    });
 
-    // Verify the user's JWT token
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    // Verify user authentication
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
-      console.error('Authentication error:', authError?.message);
+      console.error('Authentication failed:', authError?.message);
       return new Response(
-        JSON.stringify({ error: 'Unauthorized - Invalid or expired token' }), 
+        JSON.stringify({ error: 'Invalid or expired authentication token' }), 
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Creating diet plan for user:', user.id);
+    console.log('Authenticated user:', user.id);
 
-    const { plan_name, plan_description, diet_type, plan_date } = await req.json();
-
-    // Validate required fields
-    if (!plan_name || !diet_type || !plan_date) {
+    // Parse and validate request body
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (e) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: plan_name, diet_type, plan_date' }),
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Validate diet_type
+    const { plan_name, plan_description, diet_type, plan_date } = requestBody;
+
+    // Validate required fields
+    if (!plan_name?.trim()) {
+      return new Response(
+        JSON.stringify({ error: 'Campo obrigatório: plan_name' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!diet_type) {
+      return new Response(
+        JSON.stringify({ error: 'Campo obrigatório: diet_type' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!plan_date) {
+      return new Response(
+        JSON.stringify({ error: 'Campo obrigatório: plan_date' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate diet_type value
     const validDietTypes = ['emagrecimento', 'hipertrofia', 'manutencao'];
     if (!validDietTypes.includes(diet_type)) {
       return new Response(
-        JSON.stringify({ error: 'Invalid diet_type. Must be: emagrecimento, hipertrofia, or manutencao' }),
+        JSON.stringify({ 
+          error: `diet_type inválido. Valores aceitos: ${validDietTypes.join(', ')}` 
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create the diet plan
-    const { data: plan, error: planError } = await supabaseAdmin
+    // Validate plan_name length
+    if (plan_name.trim().length > 200) {
+      return new Response(
+        JSON.stringify({ error: 'plan_name deve ter no máximo 200 caracteres' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate plan_description length if provided
+    if (plan_description && plan_description.length > 1000) {
+      return new Response(
+        JSON.stringify({ error: 'plan_description deve ter no máximo 1000 caracteres' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Creating plan:', { user_id: user.id, plan_name, diet_type, plan_date });
+
+    // Insert meal plan
+    const { data: plan, error: insertError } = await supabase
       .from('meal_plans')
       .insert({
         user_id: user.id,
-        plan_name,
-        plan_description: plan_description || null,
+        plan_name: plan_name.trim(),
+        plan_description: plan_description?.trim() || null,
         diet_type,
         plan_date,
         total_calories: 0,
@@ -77,16 +135,19 @@ serve(async (req) => {
       .select()
       .single();
 
-    if (planError) {
-      console.error('Error creating plan:', planError);
+    if (insertError) {
+      console.error('Database insert error:', insertError);
       return new Response(
-        JSON.stringify({ error: planError.message }),
+        JSON.stringify({ 
+          error: `Erro ao criar plano: ${insertError.message}` 
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Diet plan created successfully:', plan.id);
+    console.log('Plan created successfully:', plan.id);
 
+    // Return success response
     return new Response(
       JSON.stringify({ 
         success: true,
@@ -104,14 +165,15 @@ serve(async (req) => {
           created_at: plan.created_at
         }
       }),
-      { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('Unexpected error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: `Erro interno: ${errorMessage}` }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
