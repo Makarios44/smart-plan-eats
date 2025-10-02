@@ -139,23 +139,25 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-muted/30 p-6">
+    <div className="min-h-screen bg-muted/30 p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Olá, {profile.name}! 👋</h1>
+            <h1 className="text-3xl font-bold">Olá, {profile.name}! 👋</h1>
             <p className="text-muted-foreground">Acompanhe seu progresso hoje</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={() => navigate("/plano")} className="text-sm">Ver Plano Completo</Button>
-            <Button variant="outline" onClick={() => navigate("/settings")} className="text-sm">
-              <SettingsIcon className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Configurações</span>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate("/plano")} className="flex-1 md:flex-initial">
+              Ver Plano Completo
             </Button>
-            <Button variant="outline" onClick={handleSignOut} className="text-sm">
-              <LogOut className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Sair</span>
+            <Button variant="outline" onClick={() => navigate("/settings")} className="hidden md:flex">
+              <SettingsIcon className="w-4 h-4 mr-2" />
+              Configurações
+            </Button>
+            <Button variant="outline" onClick={handleSignOut}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair
             </Button>
           </div>
         </div>
