@@ -17,12 +17,8 @@ import HistoricoAjustes from "./pages/HistoricoAjustes";
 import MinhaDespensa from "./pages/MinhaDespensa";
 import SugestoesIA from "./pages/SugestoesIA";
 import Insights from "./pages/Insights";
-import AdminPanel from "./pages/AdminPanel";
-import NutritionistPanel from "./pages/NutritionistPanel";
 import ResetPassword from "./pages/ResetPassword";
 import Settings from "./pages/Settings";
-import SelectRole from "./pages/SelectRole";
-import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -35,7 +31,6 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/select-role" element={<SelectRole />} />
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/plano" element={<PlanoAlimentar />} />
@@ -47,22 +42,6 @@ const App = () => (
           <Route path="/despensa" element={<MinhaDespensa />} />
           <Route path="/sugestoes-ia" element={<SugestoesIA />} />
           <Route path="/insights" element={<Insights />} />
-          <Route 
-            path="/x7k2p9m4n8q1" 
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminPanel />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/nutricionista" 
-            element={
-              <ProtectedRoute requiredRole="nutricionista">
-                <NutritionistPanel />
-              </ProtectedRoute>
-            } 
-          />
           <Route path="/auth/reset-password" element={<ResetPassword />} />
           <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

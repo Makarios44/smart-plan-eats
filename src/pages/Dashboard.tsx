@@ -1,12 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Apple, Flame, Droplets, Activity, TrendingUp, Calendar, LogOut, MessageSquare, AlertCircle, History, ShoppingBasket, Sparkles, Brain, Shield, Users, Settings as SettingsIcon } from "lucide-react";
+import { Apple, Flame, Droplets, Activity, TrendingUp, Calendar, LogOut, MessageSquare, AlertCircle, History, ShoppingBasket, Sparkles, Brain, Settings as SettingsIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 
 interface UserProfile {
   name: string;
@@ -34,7 +33,6 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -56,30 +54,6 @@ const Dashboard = () => {
       if (!session) {
         navigate("/auth");
         return;
-      }
-
-      // Load user role
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id);
-
-      if (roles && roles.length > 0) {
-        const roleHierarchy = ["admin", "nutricionista", "usuario"];
-        const highestRole = roles
-          .map(r => r.role)
-          .sort((a, b) => roleHierarchy.indexOf(a) - roleHierarchy.indexOf(b))[0];
-        
-        setUserRole(highestRole);
-
-        // Auto-redirect based on role
-        if (highestRole === "admin") {
-          navigate("/x7k2p9m4n8q1");
-          return;
-        } else if (highestRole === "nutricionista") {
-          navigate("/nutricionista");
-          return;
-        }
       }
 
       // Load profile
@@ -168,57 +142,23 @@ const Dashboard = () => {
     <div className="min-h-screen bg-muted/30 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold">Olá, {profile.name}! 👋</h1>
-              {userRole && (
-                <Badge variant={userRole === 'admin' ? 'default' : userRole === 'nutricionista' ? 'secondary' : 'outline'}>
-                  {userRole === 'admin' ? 'Admin' : userRole === 'nutricionista' ? 'Nutricionista' : 'Usuário'}
-                </Badge>
-              )}
-            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold">Olá, {profile.name}! 👋</h1>
             <p className="text-muted-foreground">Acompanhe seu progresso hoje</p>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={() => navigate("/plano")}>Ver Plano Completo</Button>
-            <Button variant="outline" onClick={() => navigate("/settings")}>
-              <SettingsIcon className="w-4 h-4 mr-2" />
-              Configurações
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => navigate("/plano")} className="text-sm">Ver Plano Completo</Button>
+            <Button variant="outline" onClick={() => navigate("/settings")} className="text-sm">
+              <SettingsIcon className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Configurações</span>
             </Button>
-            <Button variant="outline" onClick={handleSignOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sair
+            <Button variant="outline" onClick={handleSignOut} className="text-sm">
+              <LogOut className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Sair</span>
             </Button>
           </div>
         </div>
-
-        {/* Role-specific panels */}
-        {(userRole === 'admin' || userRole === 'nutricionista') && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {userRole === 'admin' && (
-              <Card 
-                className="p-6 bg-gradient-to-r from-blue-500/10 to-blue-600/10 border-blue-500/20 cursor-pointer hover:scale-105 transition-transform" 
-                onClick={() => navigate("/admin")}
-              >
-                <Shield className="w-8 h-8 mb-3 text-blue-600" />
-                <h3 className="text-xl font-bold mb-2">Painel do Admin</h3>
-                <p className="text-muted-foreground">Gerenciar organizações e membros</p>
-              </Card>
-            )}
-            
-            {userRole === 'nutricionista' && (
-              <Card 
-                className="p-6 bg-gradient-to-r from-green-500/10 to-green-600/10 border-green-500/20 cursor-pointer hover:scale-105 transition-transform" 
-                onClick={() => navigate("/nutricionista")}
-              >
-                <Users className="w-8 h-8 mb-3 text-green-600" />
-                <h3 className="text-xl font-bold mb-2">Painel do Nutricionista</h3>
-                <p className="text-muted-foreground">Gerenciar seus clientes</p>
-              </Card>
-            )}
-          </div>
-        )}
 
         {/* Calories Card */}
         <Card className="p-6 bg-gradient-card shadow-md">
