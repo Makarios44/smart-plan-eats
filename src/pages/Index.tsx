@@ -22,7 +22,7 @@ const Index = () => {
           </div>
           
           <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-            NutriFácil
+            NutriVita
           </h1>
           
           <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: "0.2s" }}>
@@ -45,7 +45,7 @@ const Index = () => {
       <section className="py-20 px-4 md:px-6 bg-background">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Por que escolher o NutriFácil?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Por que escolher o NutriVita?</h2>
             <p className="text-lg md:text-xl text-muted-foreground">Tudo que você precisa para sua jornada fitness</p>
           </div>
 
@@ -239,7 +239,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="py-8 px-4 md:px-6 bg-background border-t">
         <div className="max-w-6xl mx-auto text-center text-muted-foreground">
-          <p>&copy; 2025 NutriFácil. Todos os direitos reservados.</p>
+          <p>&copy; 2025 NutriVita. Todos os direitos reservados.</p>
           <p className="text-sm mt-2">
             Planos alimentares personalizados com inteligência artificial
           </p>

@@ -207,7 +207,7 @@ const Auth = () => {
             <Sparkles className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
-            NutriFácil
+            NutriVita
           </h1>
           <p className="text-muted-foreground">Entre ou crie sua conta</p>
         </div>
