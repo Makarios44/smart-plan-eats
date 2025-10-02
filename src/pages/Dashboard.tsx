@@ -441,11 +441,20 @@ const Dashboard = () => {
 
             <Card 
               className="p-4 cursor-pointer hover:shadow-lg transition-shadow bg-card" 
-              onClick={() => navigate("/sugestoes-ia")}
+              onClick={() => navigate("/sugestoes-refeicoes")}
             >
               <Sparkles className="w-6 h-6 text-primary mb-2" />
-              <h4 className="font-semibold mb-1">Sugestões de IA</h4>
-              <p className="text-sm text-muted-foreground">Substitutos e refeições criativas</p>
+              <h4 className="font-semibold mb-1">Sugestões de Refeições</h4>
+              <p className="text-sm text-muted-foreground">Receitas personalizadas com IA</p>
+            </Card>
+
+            <Card 
+              className="p-4 cursor-pointer hover:shadow-lg transition-shadow bg-card" 
+              onClick={() => navigate("/sugestoes-ia")}
+            >
+              <MessageSquare className="w-6 h-6 text-primary mb-2" />
+              <h4 className="font-semibold mb-1">Substituições Inteligentes</h4>
+              <p className="text-sm text-muted-foreground">Alternativas para seus alimentos</p>
             </Card>
 
             <Card 

@@ -21,6 +21,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Settings from "./pages/Settings";
 import MeusPlanos from "./pages/MeusPlanos";
 import PlanoDetalhes from "./pages/PlanoDetalhes";
+import SugestoesIANew from "./pages/SugestoesIANew";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/historico-ajustes" element={<HistoricoAjustes />} />
           <Route path="/despensa" element={<MinhaDespensa />} />
           <Route path="/sugestoes-ia" element={<SugestoesIA />} />
+          <Route path="/sugestoes-refeicoes" element={<SugestoesIANew />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/auth/reset-password" element={<ResetPassword />} />
           <Route path="/settings" element={<Settings />} />

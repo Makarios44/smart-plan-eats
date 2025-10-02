@@ -6,6 +6,9 @@ verify_jwt = true
 [functions.generate-meal-plan]
 verify_jwt = true
 
+[functions.generate-meal-suggestions]
+verify_jwt = true
+
 [functions.process-weekly-feedback]
 verify_jwt = true
 
