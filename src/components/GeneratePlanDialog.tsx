@@ -35,13 +35,26 @@ export function GeneratePlanDialog({ onPlanCreated, trigger }: GeneratePlanDialo
     setLoading(true);
 
     try {
+      console.log("Criando plano com dados:", formData);
+      
       const { data, error } = await supabase.functions.invoke('create-diet-plan', {
         body: formData
       });
 
-      if (error) throw error;
+      console.log("Resposta do edge function:", { data, error });
+
+      if (error) {
+        console.error("Erro do edge function:", error);
+        throw new Error(`Erro na chamada: ${error.message}`);
+      }
+
+      if (data?.error) {
+        console.error("Erro retornado pelo edge function:", data.error);
+        throw new Error(data.error);
+      }
 
       if (data?.success) {
+        console.log("Plano criado com sucesso:", data.plan);
         toast.success("Plano criado com sucesso!");
         setOpen(false);
         setFormData({
@@ -52,11 +65,12 @@ export function GeneratePlanDialog({ onPlanCreated, trigger }: GeneratePlanDialo
         });
         onPlanCreated?.();
       } else {
-        throw new Error(data?.error || "Erro ao criar plano");
+        throw new Error("Resposta inesperada do servidor");
       }
     } catch (error: any) {
-      console.error("Error creating plan:", error);
-      toast.error(error.message || "Erro ao criar plano");
+      console.error("Erro completo ao criar plano:", error);
+      const errorMsg = error.message || "Erro ao criar plano. Tente novamente.";
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
