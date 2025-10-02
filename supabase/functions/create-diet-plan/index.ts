@@ -145,6 +145,35 @@ serve(async (req) => {
 
     console.log('Plan created successfully:', plan.id);
 
+    // Create default meals for the plan
+    const defaultMeals = [
+      { name: 'Café da Manhã', time: '07:00', meal_order: 1 },
+      { name: 'Lanche da Manhã', time: '10:00', meal_order: 2 },
+      { name: 'Almoço', time: '12:30', meal_order: 3 },
+      { name: 'Lanche da Tarde', time: '15:30', meal_order: 4 },
+      { name: 'Jantar', time: '19:00', meal_order: 5 },
+      { name: 'Ceia', time: '21:30', meal_order: 6 },
+    ];
+
+    const mealsToInsert = defaultMeals.map(meal => ({
+      meal_plan_id: plan.id,
+      name: meal.name,
+      time: meal.time,
+      meal_order: meal.meal_order,
+      completed: false
+    }));
+
+    const { error: mealsError } = await supabaseAdmin
+      .from('meals')
+      .insert(mealsToInsert);
+
+    if (mealsError) {
+      console.error('Error creating default meals:', mealsError);
+      // Don't fail the whole operation, just log the error
+    } else {
+      console.log('Default meals created successfully');
+    }
+
     // Return success response
     return new Response(
       JSON.stringify({ 
