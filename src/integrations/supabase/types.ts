@@ -73,6 +73,44 @@ export type Database = {
           },
         ]
       }
+      client_assignments: {
+        Row: {
+          active: boolean | null
+          assigned_at: string | null
+          client_id: string
+          id: string
+          notes: string | null
+          nutritionist_id: string
+          organization_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          assigned_at?: string | null
+          client_id: string
+          id?: string
+          notes?: string | null
+          nutritionist_id: string
+          organization_id: string
+        }
+        Update: {
+          active?: boolean | null
+          assigned_at?: string | null
+          client_id?: string
+          id?: string
+          notes?: string | null
+          nutritionist_id?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_assignments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       food_items: {
         Row: {
           amount: string
@@ -218,6 +256,62 @@ export type Database = {
           },
         ]
       }
+      organization_members: {
+        Row: {
+          id: string
+          joined_at: string | null
+          organization_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string | null
+          organization_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string | null
+          organization_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          owner_id: string
+          settings: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          settings?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          settings?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           activity_level: string
@@ -344,6 +438,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          organization_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          organization_id?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          organization_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weekly_feedback: {
         Row: {
           adherence_level: number
@@ -385,10 +511,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_organizations: {
+        Args: { _user_id: string }
+        Returns: {
+          organization_id: string
+          organization_name: string
+          user_role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      has_role_in_org: {
+        Args: {
+          _org_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "nutricionista" | "usuario"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -515,6 +663,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "nutricionista", "usuario"],
+    },
   },
 } as const

@@ -17,6 +17,8 @@ import HistoricoAjustes from "./pages/HistoricoAjustes";
 import MinhaDespensa from "./pages/MinhaDespensa";
 import SugestoesIA from "./pages/SugestoesIA";
 import Insights from "./pages/Insights";
+import AdminPanel from "./pages/AdminPanel";
+import NutritionistPanel from "./pages/NutritionistPanel";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +42,8 @@ const App = () => (
           <Route path="/despensa" element={<MinhaDespensa />} />
           <Route path="/sugestoes-ia" element={<SugestoesIA />} />
           <Route path="/insights" element={<Insights />} />
+          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/nutricionista" element={<NutritionistPanel />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

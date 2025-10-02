@@ -1,11 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Apple, Flame, Droplets, Activity, TrendingUp, Calendar, LogOut, MessageSquare, AlertCircle, History, ShoppingBasket, Sparkles, Brain } from "lucide-react";
+import { Apple, Flame, Droplets, Activity, TrendingUp, Calendar, LogOut, MessageSquare, AlertCircle, History, ShoppingBasket, Sparkles, Brain, Shield, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useUserRole } from "@/hooks/useUserRole";
+import { Badge } from "@/components/ui/badge";
 
 interface UserProfile {
   name: string;
@@ -30,6 +32,7 @@ interface Meal {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { role, organizations } = useUserRole();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,7 +147,14 @@ const Dashboard = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Olá, {profile.name}! 👋</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold">Olá, {profile.name}! 👋</h1>
+              {role && (
+                <Badge variant={role === 'admin' ? 'default' : role === 'nutricionista' ? 'secondary' : 'outline'}>
+                  {role === 'admin' ? 'Admin' : role === 'nutricionista' ? 'Nutricionista' : 'Usuário'}
+                </Badge>
+              )}
+            </div>
             <p className="text-muted-foreground">Acompanhe seu progresso hoje</p>
           </div>
           <div className="flex gap-2">
@@ -155,6 +165,33 @@ const Dashboard = () => {
             </Button>
           </div>
         </div>
+
+        {/* Role-specific panels */}
+        {(role === 'admin' || role === 'nutricionista') && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {role === 'admin' && (
+              <Card 
+                className="p-6 bg-gradient-to-r from-blue-500/10 to-blue-600/10 border-blue-500/20 cursor-pointer hover:scale-105 transition-transform" 
+                onClick={() => navigate("/admin")}
+              >
+                <Shield className="w-8 h-8 mb-3 text-blue-600" />
+                <h3 className="text-xl font-bold mb-2">Painel do Admin</h3>
+                <p className="text-muted-foreground">Gerenciar organizações e membros</p>
+              </Card>
+            )}
+            
+            {role === 'nutricionista' && (
+              <Card 
+                className="p-6 bg-gradient-to-r from-green-500/10 to-green-600/10 border-green-500/20 cursor-pointer hover:scale-105 transition-transform" 
+                onClick={() => navigate("/nutricionista")}
+              >
+                <Users className="w-8 h-8 mb-3 text-green-600" />
+                <h3 className="text-xl font-bold mb-2">Painel do Nutricionista</h3>
+                <p className="text-muted-foreground">Gerenciar seus clientes</p>
+              </Card>
+            )}
+          </div>
+        )}
 
         {/* Calories Card */}
         <Card className="p-6 bg-gradient-card shadow-md">
