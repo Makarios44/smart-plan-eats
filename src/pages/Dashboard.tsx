@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Apple, Flame, Droplets, Activity, TrendingUp, Calendar, LogOut, MessageSquare, AlertCircle, History } from "lucide-react";
+import { Apple, Flame, Droplets, Activity, TrendingUp, Calendar, LogOut, MessageSquare, AlertCircle, History, ShoppingBasket, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -322,6 +322,33 @@ const Dashboard = () => {
               <History className="w-6 h-6 text-primary mb-2" />
               <h4 className="font-semibold mb-1">Histórico</h4>
               <p className="text-sm text-muted-foreground">Veja mudanças no plano</p>
+            </Card>
+          </div>
+        </Card>
+
+        {/* AI-Powered Features Section */}
+        <Card className="p-6 bg-gradient-to-r from-primary/10 to-secondary/10 border-2 border-primary/30">
+          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-primary" />
+            Funcionalidades com IA
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card 
+              className="p-4 cursor-pointer hover:shadow-lg transition-shadow bg-card" 
+              onClick={() => navigate("/despensa")}
+            >
+              <ShoppingBasket className="w-6 h-6 text-primary mb-2" />
+              <h4 className="font-semibold mb-1">Minha Despensa</h4>
+              <p className="text-sm text-muted-foreground">Registre alimentos disponíveis</p>
+            </Card>
+
+            <Card 
+              className="p-4 cursor-pointer hover:shadow-lg transition-shadow bg-card" 
+              onClick={() => navigate("/sugestoes-ia")}
+            >
+              <Sparkles className="w-6 h-6 text-primary mb-2" />
+              <h4 className="font-semibold mb-1">Sugestões de IA</h4>
+              <p className="text-sm text-muted-foreground">Substitutos e refeições criativas</p>
             </Card>
           </div>
         </Card>

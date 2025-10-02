@@ -14,6 +14,8 @@ import NotFound from "./pages/NotFound";
 import FeedbackSemanal from "./pages/FeedbackSemanal";
 import RestricoesDietarias from "./pages/RestricoesDietarias";
 import HistoricoAjustes from "./pages/HistoricoAjustes";
+import MinhaDespensa from "./pages/MinhaDespensa";
+import SugestoesIA from "./pages/SugestoesIA";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,8 @@ const App = () => (
           <Route path="/feedback-semanal" element={<FeedbackSemanal />} />
           <Route path="/restricoes" element={<RestricoesDietarias />} />
           <Route path="/historico-ajustes" element={<HistoricoAjustes />} />
+          <Route path="/despensa" element={<MinhaDespensa />} />
+          <Route path="/sugestoes-ia" element={<SugestoesIA />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

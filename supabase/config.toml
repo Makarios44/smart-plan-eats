@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.process-weekly-feedback]
 verify_jwt = true
+
+[functions.suggest-meal-alternatives]
+verify_jwt = true
