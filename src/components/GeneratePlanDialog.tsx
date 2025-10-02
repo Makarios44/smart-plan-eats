@@ -35,20 +35,20 @@ export function GeneratePlanDialog({ onPlanCreated, trigger }: GeneratePlanDialo
     setLoading(true);
 
     try {
-      console.log("Criando plano com dados:", formData);
+      // Get the current session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      // Get the current session to ensure we have auth
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error("Você precisa estar autenticado para criar um plano");
+      if (sessionError || !session) {
+        toast.error("Você precisa estar autenticado para criar um plano");
+        console.error("Session error:", sessionError);
+        return;
       }
 
+      console.log("Criando plano com dados:", formData);
+      console.log("Token de autenticação presente:", !!session.access_token);
+      
       const { data, error } = await supabase.functions.invoke('create-diet-plan', {
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        body: formData
       });
 
       console.log("Resposta do edge function:", { data, error });

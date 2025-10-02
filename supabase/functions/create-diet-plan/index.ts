@@ -13,7 +13,7 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const authHeader = req.headers.get('Authorization');
 
     if (!authHeader) {
@@ -24,23 +24,22 @@ serve(async (req) => {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    // Create client with service role key for admin operations
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get authenticated user using the JWT token
+    // Verify the user's JWT token
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     
     if (authError || !user) {
-      console.error('Authentication error:', authError);
+      console.error('Authentication error:', authError?.message);
       return new Response(
         JSON.stringify({ error: 'Unauthorized - Invalid or expired token' }), 
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Authenticated user:', user.id);
+    console.log('Creating diet plan for user:', user.id);
 
     const { plan_name, plan_description, diet_type, plan_date } = await req.json();
 
@@ -61,10 +60,8 @@ serve(async (req) => {
       );
     }
 
-    console.log('Creating diet plan for user:', user.id);
-
     // Create the diet plan
-    const { data: plan, error: planError } = await supabase
+    const { data: plan, error: planError } = await supabaseAdmin
       .from('meal_plans')
       .insert({
         user_id: user.id,
