@@ -134,6 +134,10 @@ const MeusPlanos = () => {
                       </span>
                     </div>
                     
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Tipo:</strong> {getDietTypeLabel(plan.diet_type)}
+                    </p>
+                    
                     {plan.plan_description && (
                       <p className="text-muted-foreground mb-3">{plan.plan_description}</p>
                     )}
