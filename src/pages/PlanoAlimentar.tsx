@@ -1,10 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Coffee, Sun, Sunset, Moon, Check } from "lucide-react";
+import { ArrowLeft, Coffee, Sun, Sunset, Moon, Check, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AddFoodDialog } from "@/components/AddFoodDialog";
 
 interface FoodItem {
   id: string;
@@ -100,6 +101,23 @@ const PlanoAlimentar = () => {
     }
   };
 
+  const deleteFoodItem = async (foodId: string) => {
+    try {
+      const { error } = await supabase
+        .from("food_items")
+        .delete()
+        .eq("id", foodId);
+
+      if (error) throw error;
+
+      toast.success("Alimento removido");
+      loadMeals();
+    } catch (error: any) {
+      console.error("Error:", error);
+      toast.error("Erro ao remover alimento");
+    }
+  };
+
   const getMealIcon = (index: number) => {
     const icons = [Coffee, Sun, Sunset, Sun, Moon];
     return icons[index] || Sun;
@@ -176,23 +194,53 @@ const PlanoAlimentar = () => {
                 </div>
 
                 <div className="space-y-2">
-                  {meal.food_items.map((food) => (
-                    <div
-                      key={food.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                    >
-                      <div>
-                        <p className="font-medium">{food.name}</p>
-                        <p className="text-sm text-muted-foreground">{food.amount}</p>
-                      </div>
-                      <div className="text-right text-sm">
-                        <p className="font-semibold">{Math.round(food.calories)} kcal</p>
-                        <p className="text-muted-foreground">
-                          P: {Math.round(food.protein)}g · C: {Math.round(food.carbs)}g · G: {Math.round(food.fats)}g
-                        </p>
-                      </div>
+                  {meal.food_items.length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <p className="mb-4">Nenhum alimento adicionado ainda</p>
+                      <AddFoodDialog 
+                        mealId={meal.id}
+                        mealName={meal.name}
+                        onFoodAdded={loadMeals}
+                      />
                     </div>
-                  ))}
+                  ) : (
+                    <>
+                      {meal.food_items.map((food) => (
+                        <div
+                          key={food.id}
+                          className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                        >
+                          <div className="flex-1">
+                            <p className="font-medium">{food.name}</p>
+                            <p className="text-sm text-muted-foreground">{food.amount}</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-right text-sm">
+                              <p className="font-semibold">{Math.round(food.calories)} kcal</p>
+                              <p className="text-muted-foreground">
+                                P: {Math.round(food.protein)}g · C: {Math.round(food.carbs)}g · G: {Math.round(food.fats)}g
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => deleteFoodItem(food.id)}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="pt-2">
+                        <AddFoodDialog 
+                          mealId={meal.id}
+                          mealName={meal.name}
+                          onFoodAdded={loadMeals}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="mt-4">
