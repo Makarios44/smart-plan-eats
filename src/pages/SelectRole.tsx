@@ -37,20 +37,6 @@ const roles = [
     ],
     badge: "Profissional",
   },
-  {
-    id: "admin",
-    title: "Administrador",
-    description: "Gerencie organizações e equipes",
-    icon: Shield,
-    color: "from-purple-500 to-pink-500",
-    features: [
-      "Gestão de organizações",
-      "Controle de membros e permissões",
-      "Dashboard administrativo",
-      "Análises consolidadas",
-    ],
-    badge: "Enterprise",
-  },
 ];
 
 const SelectRole = () => {
