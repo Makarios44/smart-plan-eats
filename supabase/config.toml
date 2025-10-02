@@ -11,3 +11,12 @@ verify_jwt = true
 
 [functions.predict-patterns]
 verify_jwt = true
+
+[functions.analyze-client-groups]
+verify_jwt = true
+
+[functions.generate-client-report]
+verify_jwt = true
+
+[functions.batch-update-plans]
+verify_jwt = true

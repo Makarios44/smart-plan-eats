@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -14,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Building2, Users, UserPlus, Shield } from "lucide-react";
+import { ArrowLeft, Building2, Users, UserPlus, Shield, BarChart3, Activity, TrendingUp } from "lucide-react";
 
 interface Organization {
   id: string;
@@ -32,6 +33,14 @@ interface Member {
   }>;
 }
 
+interface SystemStats {
+  totalUsers: number;
+  totalOrganizations: number;
+  totalNutritionists: number;
+  totalClients: number;
+  activeClients: number;
+}
+
 const AdminPanel = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -40,10 +49,18 @@ const AdminPanel = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [newOrgName, setNewOrgName] = useState("");
+  const [stats, setStats] = useState<SystemStats>({
+    totalUsers: 0,
+    totalOrganizations: 0,
+    totalNutritionists: 0,
+    totalClients: 0,
+    activeClients: 0
+  });
 
   useEffect(() => {
     checkAdminAccess();
     loadOrganizations();
+    loadSystemStats();
   }, []);
 
   useEffect(() => {
@@ -72,6 +89,48 @@ const AdminPanel = () => {
         description: "Você não tem permissão para acessar esta página.",
       });
       navigate("/dashboard");
+    }
+  };
+
+  const loadSystemStats = async () => {
+    try {
+      // Count all profiles
+      const { count: usersCount } = await supabase
+        .from("profiles")
+        .select("*", { count: 'exact', head: true });
+
+      // Count organizations
+      const { count: orgsCount } = await supabase
+        .from("organizations")
+        .select("*", { count: 'exact', head: true });
+
+      // Count nutritionists
+      const { data: nutritionistRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "nutricionista");
+
+      // Count active client assignments
+      const { count: activeClientsCount } = await supabase
+        .from("client_assignments")
+        .select("*", { count: 'exact', head: true })
+        .eq("active", true);
+
+      // Count total clients (users with role 'usuario')
+      const { data: clientRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "usuario");
+
+      setStats({
+        totalUsers: usersCount || 0,
+        totalOrganizations: orgsCount || 0,
+        totalNutritionists: nutritionistRoles?.length || 0,
+        totalClients: clientRoles?.length || 0,
+        activeClients: activeClientsCount || 0
+      });
+    } catch (error: any) {
+      console.error('Error loading stats:', error);
     }
   };
 
@@ -171,6 +230,7 @@ const AdminPanel = () => {
 
       setNewOrgName("");
       loadOrganizations();
+      loadSystemStats();
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -180,14 +240,14 @@ const AdminPanel = () => {
     }
   };
 
-  const getRoleBadgeColor = (role: string) => {
+  const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case "admin":
-        return "bg-red-500";
+        return "destructive";
       case "nutricionista":
-        return "bg-blue-500";
+        return "default";
       default:
-        return "bg-gray-500";
+        return "secondary";
     }
   };
 
@@ -203,11 +263,11 @@ const AdminPanel = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate("/dashboard")} className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
+          <Button variant="ghost" onClick={() => navigate("/dashboard")} size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
         </div>
@@ -215,79 +275,191 @@ const AdminPanel = () => {
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2">
             <Shield className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-bold">Painel de Administração</h1>
+            <h1 className="text-3xl md:text-4xl font-bold">Painel de Administração B2B</h1>
           </div>
-          <p className="text-muted-foreground">Gerencie organizações, usuários e permissões</p>
+          <p className="text-muted-foreground">Gerencie organizações, usuários, permissões e métricas do sistema</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              Organizações
-            </CardTitle>
-            <CardDescription>Gerencie suas organizações</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Nome da nova organização"
-                value={newOrgName}
-                onChange={(e) => setNewOrgName(e.target.value)}
-              />
-              <Button onClick={createOrganization}>Criar</Button>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Organização Selecionada</Label>
-              <Select value={selectedOrg} onValueChange={setSelectedOrg}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma organização" />
-                </SelectTrigger>
-                <SelectContent>
-                  {organizations.map((org) => (
-                    <SelectItem key={org.id} value={org.id}>
-                      {org.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {selectedOrg && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Membros da Organização
-              </CardTitle>
-              <CardDescription>Gerencie membros e suas permissões</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                {members.map((member) => (
-                  <div
-                    key={member.user_id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div>
-                      <p className="font-semibold">{member.profiles.name}</p>
-                      <div className="flex gap-2 mt-1">
-                        {member.user_roles.map((ur, idx) => (
-                          <Badge key={idx} className={getRoleBadgeColor(ur.role)}>
-                            {ur.role}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{stats.totalUsers}</div>
+              <p className="text-xs text-muted-foreground mt-1">Todos os perfis</p>
             </CardContent>
           </Card>
-        )}
+
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium">Organizações</CardTitle>
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{stats.totalOrganizations}</div>
+              <p className="text-xs text-muted-foreground mt-1">Empresas cadastradas</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium">Nutricionistas</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{stats.totalNutritionists}</div>
+              <p className="text-xs text-muted-foreground mt-1">Profissionais ativos</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium">Clientes Ativos</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{stats.activeClients}</div>
+              <p className="text-xs text-muted-foreground mt-1">De {stats.totalClients} totais</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="organizations" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="organizations">Organizações</TabsTrigger>
+            <TabsTrigger value="members">Membros</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="organizations" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Gerenciar Organizações
+                </CardTitle>
+                <CardDescription>Crie e gerencie organizações B2B</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col md:flex-row gap-2">
+                  <Input
+                    placeholder="Nome da nova organização"
+                    value={newOrgName}
+                    onChange={(e) => setNewOrgName(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && createOrganization()}
+                  />
+                  <Button onClick={createOrganization} className="md:w-auto">
+                    <Building2 className="h-4 w-4 mr-2" />
+                    Criar Organização
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Organização Selecionada</Label>
+                  <Select value={selectedOrg} onValueChange={setSelectedOrg}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma organização" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {organizations.map((org) => (
+                        <SelectItem key={org.id} value={org.id}>
+                          {org.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-3 mt-6">
+                  <h3 className="text-sm font-semibold">Organizações Cadastradas</h3>
+                  {organizations.map((org) => (
+                    <Card key={org.id} className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-semibold">{org.name}</h4>
+                          <p className="text-xs text-muted-foreground">
+                            Criada em: {new Date(org.created_at).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedOrg(org.id)}
+                        >
+                          Ver Membros
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="members" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Membros da Organização
+                </CardTitle>
+                <CardDescription>
+                  {selectedOrg 
+                    ? `Gerencie membros e suas permissões da organização selecionada`
+                    : "Selecione uma organização para ver os membros"
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!selectedOrg ? (
+                  <div className="text-center py-12">
+                    <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">
+                      Selecione uma organização na aba "Organizações"
+                    </p>
+                  </div>
+                ) : members.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">
+                      Nenhum membro nesta organização
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {members.map((member) => (
+                      <Card key={member.user_id} className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-2">
+                            <h4 className="font-semibold">{member.profiles.name}</h4>
+                            <div className="flex gap-2 flex-wrap">
+                              {member.user_roles.map((ur, idx) => (
+                                <Badge key={idx} variant={getRoleBadgeVariant(ur.role)}>
+                                  {ur.role === 'admin' ? 'Administrador' : 
+                                   ur.role === 'nutricionista' ? 'Nutricionista' : 
+                                   'Usuário'}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

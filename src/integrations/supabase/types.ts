@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      adherence_metrics: {
+        Row: {
+          adherence_percentage: number
+          created_at: string | null
+          date: string
+          id: string
+          meals_completed: number
+          meals_planned: number
+          user_id: string
+        }
+        Insert: {
+          adherence_percentage?: number
+          created_at?: string | null
+          date: string
+          id?: string
+          meals_completed?: number
+          meals_planned?: number
+          user_id: string
+        }
+        Update: {
+          adherence_percentage?: number
+          created_at?: string | null
+          date?: string
+          id?: string
+          meals_completed?: number
+          meals_planned?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       adjustment_history: {
         Row: {
           adjustment_date: string | null
@@ -256,6 +286,36 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       organization_members: {
         Row: {
           id: string
@@ -380,27 +440,51 @@ export type Database = {
       }
       progress_tracking: {
         Row: {
+          arm_left: number | null
+          arm_right: number | null
+          body_fat_percentage: number | null
+          chest: number | null
           created_at: string | null
           date: string
+          hip: number | null
           id: string
           notes: string | null
+          thigh_left: number | null
+          thigh_right: number | null
           user_id: string
+          waist: number | null
           weight: number
         }
         Insert: {
+          arm_left?: number | null
+          arm_right?: number | null
+          body_fat_percentage?: number | null
+          chest?: number | null
           created_at?: string | null
           date: string
+          hip?: number | null
           id?: string
           notes?: string | null
+          thigh_left?: number | null
+          thigh_right?: number | null
           user_id: string
+          waist?: number | null
           weight: number
         }
         Update: {
+          arm_left?: number | null
+          arm_right?: number | null
+          body_fat_percentage?: number | null
+          chest?: number | null
           created_at?: string | null
           date?: string
+          hip?: number | null
           id?: string
           notes?: string | null
+          thigh_left?: number | null
+          thigh_right?: number | null
           user_id?: string
+          waist?: number | null
           weight?: number
         }
         Relationships: []
