@@ -1,19 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card } from "@/components/ui/card";
-import { ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
+import { ChevronRight, ChevronLeft, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-type OnboardingStep = "welcome" | "personal" | "activity" | "goal" | "preferences";
+type OnboardingStep = "personal" | "activity" | "goal" | "preferences";
 
 const Onboarding = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState<OnboardingStep>("welcome");
+  const [step, setStep] = useState<OnboardingStep>("personal");
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
   
   // Form data
   const [formData, setFormData] = useState({
@@ -29,8 +32,30 @@ const Onboarding = () => {
     restrictions: [] as string[],
   });
 
+  useEffect(() => {
+    // Check if user is logged in
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+      setUser(session.user);
+
+      // Check if profile already exists
+      supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            navigate("/dashboard");
+          }
+        });
+    });
+  }, [navigate]);
+
   const calculateTDEE = () => {
-    // Simplified Mifflin-St Jeor equation
     const weight = parseFloat(formData.weight);
     const height = parseFloat(formData.height);
     const age = parseFloat(formData.age);
@@ -53,6 +78,24 @@ const Onboarding = () => {
     return Math.round(bmr * (activityMultipliers[formData.activityLevel] || 1.2));
   };
 
+  const calculateMacros = (tdee: number) => {
+    let targetCalories = tdee;
+    
+    // Adjust calories based on goal
+    if (formData.goal === "lose") {
+      targetCalories = Math.round(tdee * 0.85); // 15% deficit
+    } else if (formData.goal === "gain") {
+      targetCalories = Math.round(tdee * 1.1); // 10% surplus
+    }
+
+    // Calculate macros (30% protein, 40% carbs, 30% fats)
+    const protein = Math.round((targetCalories * 0.3) / 4); // 4 cal/g
+    const carbs = Math.round((targetCalories * 0.4) / 4); // 4 cal/g
+    const fats = Math.round((targetCalories * 0.3) / 9); // 9 cal/g
+
+    return { targetCalories, protein, carbs, fats };
+  };
+
   const handleNext = () => {
     // Validate current step
     if (step === "personal" && (!formData.name || !formData.age || !formData.gender || !formData.weight || !formData.height)) {
@@ -68,48 +111,150 @@ const Onboarding = () => {
       return;
     }
 
-    const steps: OnboardingStep[] = ["welcome", "personal", "activity", "goal", "preferences"];
+    const steps: OnboardingStep[] = ["personal", "activity", "goal", "preferences"];
     const currentIndex = steps.indexOf(step);
     
     if (currentIndex < steps.length - 1) {
       setStep(steps[currentIndex + 1]);
     } else {
-      // Calculate TDEE and save to localStorage (will use database later)
-      const tdee = calculateTDEE();
-      localStorage.setItem("userProfile", JSON.stringify({ ...formData, tdee }));
-      toast.success("Perfil criado com sucesso!");
-      navigate("/dashboard");
+      handleComplete();
     }
   };
 
   const handleBack = () => {
-    const steps: OnboardingStep[] = ["welcome", "personal", "activity", "goal", "preferences"];
+    const steps: OnboardingStep[] = ["personal", "activity", "goal", "preferences"];
     const currentIndex = steps.indexOf(step);
     if (currentIndex > 0) {
       setStep(steps[currentIndex - 1]);
     }
   };
 
+  const handleComplete = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      // Calculate nutritional values
+      const tdee = calculateTDEE();
+      const macros = calculateMacros(tdee);
+
+      // Save profile to database
+      const { error: profileError } = await supabase.from("profiles").insert({
+        user_id: user.id,
+        name: formData.name,
+        age: parseInt(formData.age),
+        gender: formData.gender,
+        weight: parseFloat(formData.weight),
+        height: parseFloat(formData.height),
+        activity_level: formData.activityLevel,
+        work_type: formData.workType,
+        goal: formData.goal,
+        diet_type: formData.dietType || "regular",
+        restrictions: formData.restrictions,
+        tdee: tdee,
+        target_calories: macros.targetCalories,
+        target_protein: macros.protein,
+        target_carbs: macros.carbs,
+        target_fats: macros.fats,
+      });
+
+      if (profileError) throw profileError;
+
+      // Generate meal plan with AI
+      toast.info("Gerando seu plano alimentar personalizado...");
+
+      const { data: mealPlanData, error: mealPlanError } = await supabase.functions.invoke("generate-meal-plan", {
+        body: {
+          userProfile: {
+            name: formData.name,
+            age: parseInt(formData.age),
+            gender: formData.gender,
+            weight: parseFloat(formData.weight),
+            height: parseFloat(formData.height),
+            goal: formData.goal,
+            activity_level: formData.activityLevel,
+            work_type: formData.workType,
+            diet_type: formData.dietType || "regular",
+            restrictions: formData.restrictions,
+            target_calories: macros.targetCalories,
+            target_protein: macros.protein,
+            target_carbs: macros.carbs,
+            target_fats: macros.fats,
+          },
+        },
+      });
+
+      if (mealPlanError) {
+        console.error("Meal plan error:", mealPlanError);
+        toast.warning("Perfil salvo! Você pode gerar seu plano depois.");
+      } else if (mealPlanData) {
+        // Save meal plan to database
+        const today = new Date().toISOString().split('T')[0];
+        
+        const { data: planData, error: planError } = await supabase
+          .from("meal_plans")
+          .insert({
+            user_id: user.id,
+            plan_date: today,
+            total_calories: mealPlanData.totals.calories,
+            total_protein: mealPlanData.totals.protein,
+            total_carbs: mealPlanData.totals.carbs,
+            total_fats: mealPlanData.totals.fats,
+          })
+          .select()
+          .single();
+
+        if (planError || !planData) {
+          console.error("Plan save error:", planError);
+          throw new Error("Erro ao salvar plano");
+        }
+
+        // Save meals
+        for (const meal of mealPlanData.mealPlan) {
+          const { data: mealData, error: mealError } = await supabase
+            .from("meals")
+            .insert({
+              meal_plan_id: planData.id,
+              name: meal.name,
+              time: meal.time,
+              meal_order: meal.order,
+            })
+            .select()
+            .single();
+
+          if (mealError || !mealData) {
+            console.error("Meal save error:", mealError);
+            continue;
+          }
+
+          // Save food items
+          for (const food of meal.foods) {
+            await supabase.from("food_items").insert({
+              meal_id: mealData.id,
+              name: food.name,
+              amount: food.amount,
+              calories: food.calories,
+              protein: food.protein,
+              carbs: food.carbs,
+              fats: food.fats,
+            });
+          }
+        }
+      }
+
+      toast.success("Perfil criado com sucesso!");
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Error:", error);
+      toast.error(error.message || "Erro ao criar perfil");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl p-8 shadow-lg animate-fade-in">
-        {step === "welcome" && (
-          <div className="text-center space-y-6">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-primary mb-4">
-              <Sparkles className="w-10 h-10 text-white" />
-            </div>
-            <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              Bem-vindo ao NutriFácil
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-md mx-auto">
-              Vamos criar seu plano alimentar personalizado em poucos passos
-            </p>
-            <Button size="lg" onClick={handleNext} className="mt-8">
-              Começar <ChevronRight className="ml-2 w-5 h-5" />
-            </Button>
-          </div>
-        )}
-
         {step === "personal" && (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Informações Pessoais</h2>
@@ -173,10 +318,7 @@ const Onboarding = () => {
               </div>
             </div>
 
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={handleBack}>
-                <ChevronLeft className="mr-2 w-5 h-5" /> Voltar
-              </Button>
+            <div className="flex justify-end pt-4">
               <Button onClick={handleNext}>
                 Próximo <ChevronRight className="ml-2 w-5 h-5" />
               </Button>
@@ -340,8 +482,17 @@ const Onboarding = () => {
               <Button variant="outline" onClick={handleBack}>
                 <ChevronLeft className="mr-2 w-5 h-5" /> Voltar
               </Button>
-              <Button onClick={handleNext}>
-                Finalizar <Sparkles className="ml-2 w-5 h-5" />
+              <Button onClick={handleNext} disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                    Criando seu plano...
+                  </>
+                ) : (
+                  <>
+                    Finalizar <Sparkles className="ml-2 w-5 h-5" />
+                  </>
+                )}
               </Button>
             </div>
           </div>

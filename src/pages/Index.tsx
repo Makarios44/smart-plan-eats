@@ -31,7 +31,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
             <Button 
               size="lg" 
-              onClick={() => navigate("/onboarding")}
+              onClick={() => navigate("/auth")}
               className="text-lg px-8 py-6 bg-white text-primary hover:bg-white/90 shadow-lg"
             >
               Começar Agora <Zap className="ml-2 w-5 h-5" />
@@ -128,7 +128,7 @@ const Index = () => {
           </p>
           <Button 
             size="lg"
-            onClick={() => navigate("/onboarding")}
+            onClick={() => navigate("/auth")}
             className="text-lg px-8 py-6 bg-white text-primary hover:bg-white/90 shadow-lg"
           >
             Criar Meu Plano Gratuito

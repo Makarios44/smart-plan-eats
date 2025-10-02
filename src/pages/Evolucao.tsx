@@ -1,22 +1,108 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, TrendingDown, Calendar, Award } from "lucide-react";
+import { ArrowLeft, TrendingDown, Calendar, Award, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
+interface ProgressEntry {
+  date: string;
+  weight: number;
+}
 
 const Evolucao = () => {
   const navigate = useNavigate();
+  const [progress, setProgress] = useState<ProgressEntry[]>([]);
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [newWeight, setNewWeight] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Mock data
-  const weightHistory = [
-    { week: "Sem 1", weight: 82 },
-    { week: "Sem 2", weight: 81.5 },
-    { week: "Sem 3", weight: 81 },
-    { week: "Sem 4", weight: 80.3 },
-  ];
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  const adherence = 85;
-  const weightLost = 1.7;
-  const daysCompleted = 24;
+  const loadData = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
+      // Load profile
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .single();
+
+      setProfile(profileData);
+
+      // Load progress
+      const { data: progressData } = await supabase
+        .from("progress_tracking")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("date", { ascending: false })
+        .limit(10);
+
+      if (progressData) {
+        setProgress(progressData);
+      }
+    } catch (error: any) {
+      console.error("Error:", error);
+      toast.error("Erro ao carregar evolução");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addProgress = async () => {
+    if (!newWeight || !profile) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { error } = await supabase.from("progress_tracking").upsert({
+        user_id: session.user.id,
+        date: today,
+        weight: parseFloat(newWeight),
+      });
+
+      if (error) throw error;
+
+      toast.success("Peso registrado!");
+      setDialogOpen(false);
+      setNewWeight("");
+      loadData();
+    } catch (error: any) {
+      console.error("Error:", error);
+      toast.error("Erro ao salvar peso");
+    }
+  };
+
+  if (loading || !profile) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const initialWeight = profile.weight;
+  const currentWeight = progress.length > 0 ? progress[0].weight : initialWeight;
+  const weightChange = initialWeight - currentWeight;
 
   return (
     <div className="min-h-screen bg-muted/30 p-6">
@@ -25,10 +111,39 @@ const Evolucao = () => {
           <Button variant="ghost" onClick={() => navigate("/dashboard")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-bold">Evolução</h1>
             <p className="text-muted-foreground">Acompanhe seu progresso</p>
           </div>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Registrar Peso
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Registrar Peso de Hoje</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div>
+                  <Label htmlFor="weight">Peso (kg)</Label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    step="0.1"
+                    value={newWeight}
+                    onChange={(e) => setNewWeight(e.target.value)}
+                    placeholder={currentWeight.toString()}
+                  />
+                </div>
+                <Button onClick={addProgress} className="w-full">
+                  Salvar
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Stats Grid */}
@@ -39,8 +154,10 @@ const Evolucao = () => {
                 <TrendingDown className="w-5 h-5 text-success" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Peso Perdido</p>
-                <p className="text-3xl font-bold text-success">{weightLost} kg</p>
+                <p className="text-sm text-muted-foreground">Variação de Peso</p>
+                <p className="text-3xl font-bold text-success">
+                  {weightChange > 0 ? "-" : weightChange < 0 ? "+" : ""}{Math.abs(weightChange).toFixed(1)} kg
+                </p>
               </div>
             </div>
           </Card>
@@ -51,8 +168,8 @@ const Evolucao = () => {
                 <Calendar className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Dias Completos</p>
-                <p className="text-3xl font-bold">{daysCompleted}</p>
+                <p className="text-sm text-muted-foreground">Peso Atual</p>
+                <p className="text-3xl font-bold">{currentWeight.toFixed(1)} kg</p>
               </div>
             </div>
           </Card>
@@ -63,43 +180,71 @@ const Evolucao = () => {
                 <Award className="w-5 h-5 text-secondary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Adesão ao Plano</p>
-                <p className="text-3xl font-bold">{adherence}%</p>
+                <p className="text-sm text-muted-foreground">Registros</p>
+                <p className="text-3xl font-bold">{progress.length}</p>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Weight Chart */}
+        {/* Weight History */}
         <Card className="p-6">
-          <h3 className="text-xl font-bold mb-4">Evolução de Peso</h3>
-          <div className="space-y-4">
-            {weightHistory.map((entry, index) => (
-              <div key={index} className="flex items-center gap-4">
-                <div className="w-20 text-sm font-medium text-muted-foreground">{entry.week}</div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 bg-gradient-primary rounded-lg" style={{ width: `${(entry.weight / 85) * 100}%` }} />
-                    <span className="font-bold">{entry.weight} kg</span>
+          <h3 className="text-xl font-bold mb-4">Histórico de Peso</h3>
+          {progress.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">
+                Nenhum registro ainda
+              </p>
+              <Button onClick={() => setDialogOpen(true)}>
+                Registrar Primeiro Peso
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {progress.map((entry, index) => (
+                <div key={index} className="flex items-center gap-4">
+                  <div className="w-32 text-sm font-medium text-muted-foreground">
+                    {new Date(entry.date).toLocaleDateString('pt-BR')}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="h-8 bg-gradient-primary rounded-lg transition-all" 
+                        style={{ width: `${(entry.weight / initialWeight) * 100}%` }} 
+                      />
+                      <span className="font-bold">{entry.weight.toFixed(1)} kg</span>
+                      {index > 0 && (
+                        <span className={`text-sm ${
+                          entry.weight < progress[index - 1].weight ? "text-success" : "text-destructive"
+                        }`}>
+                          {entry.weight < progress[index - 1].weight ? "▼" : "▲"}
+                          {Math.abs(entry.weight - progress[index - 1].weight).toFixed(1)} kg
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
 
-        {/* Weekly Feedback */}
+        {/* Goal Card */}
         <Card className="p-6 bg-gradient-card">
-          <h3 className="text-xl font-bold mb-4">Feedback Semanal</h3>
-          <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-success/10 border border-success/20">
-              <p className="font-medium text-success">✓ Ótimo trabalho!</p>
-              <p className="text-sm mt-1">Você manteve uma boa adesão ao plano esta semana. Continue assim!</p>
-            </div>
-            <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-              <p className="font-medium text-primary">💡 Dica da semana</p>
-              <p className="text-sm mt-1">Tente aumentar a ingestão de proteínas no café da manhã para melhorar a saciedade.</p>
-            </div>
+          <h3 className="text-xl font-bold mb-4">Seu Objetivo</h3>
+          <div className="space-y-2">
+            <p className="text-muted-foreground">
+              <span className="font-medium">Objetivo: </span>
+              {profile.goal === "lose" ? "Perder peso" : profile.goal === "gain" ? "Ganhar massa" : "Manter peso"}
+            </p>
+            <p className="text-muted-foreground">
+              <span className="font-medium">Peso inicial: </span>
+              {initialWeight} kg
+            </p>
+            <p className="text-muted-foreground">
+              <span className="font-medium">Peso atual: </span>
+              {currentWeight.toFixed(1)} kg
+            </p>
           </div>
         </Card>
       </div>
