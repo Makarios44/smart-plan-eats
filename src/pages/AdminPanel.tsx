@@ -58,7 +58,6 @@ const AdminPanel = () => {
   });
 
   useEffect(() => {
-    checkAdminAccess();
     loadOrganizations();
     loadSystemStats();
   }, []);
@@ -68,29 +67,6 @@ const AdminPanel = () => {
       loadMembers();
     }
   }, [selectedOrg]);
-
-  const checkAdminAccess = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id);
-
-    const isAdmin = roles?.some(r => r.role === "admin");
-    if (!isAdmin) {
-      toast({
-        variant: "destructive",
-        title: "Acesso negado",
-        description: "Você não tem permissão para acessar esta página.",
-      });
-      navigate("/dashboard");
-    }
-  };
 
   const loadSystemStats = async () => {
     try {

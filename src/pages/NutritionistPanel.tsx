@@ -33,32 +33,8 @@ const NutritionistPanel = () => {
   const [analyzingGroups, setAnalyzingGroups] = useState(false);
 
   useEffect(() => {
-    checkNutritionistAccess();
     loadClients();
   }, []);
-
-  const checkNutritionistAccess = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id);
-
-    const isNutritionist = roles?.some(r => r.role === "nutricionista" || r.role === "admin");
-    if (!isNutritionist) {
-      toast({
-        variant: "destructive",
-        title: "Acesso negado",
-        description: "Você não tem permissão para acessar esta página.",
-      });
-      navigate("/dashboard");
-    }
-  };
 
   const loadClients = async () => {
     setLoading(true);
