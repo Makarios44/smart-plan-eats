@@ -36,6 +36,8 @@ const Dashboard = () => {
   const [todayPlan, setTodayPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [addingMeals, setAddingMeals] = useState(false);
+  const [generatingSuggestions, setGeneratingSuggestions] = useState(false);
+  const [mealSuggestions, setMealSuggestions] = useState<any[]>([]);
 
   useEffect(() => {
     loadData();
@@ -110,6 +112,25 @@ const Dashboard = () => {
       toast.error("Erro ao carregar dados");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateAIMealSuggestions = async () => {
+    setGeneratingSuggestions(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-meal-suggestions');
+
+      if (error) throw error;
+
+      if (data?.suggestions) {
+        setMealSuggestions(data.suggestions);
+        toast.success(`${data.suggestions.length} sugestões geradas com sucesso!`);
+      }
+    } catch (error: any) {
+      console.error('Error generating suggestions:', error);
+      toast.error("Erro ao gerar sugestões");
+    } finally {
+      setGeneratingSuggestions(false);
     }
   };
 
@@ -294,29 +315,60 @@ const Dashboard = () => {
               <div className="text-center py-8">
                 <Calendar className="w-16 h-16 mx-auto mb-4 text-primary opacity-50" />
                 <h4 className="font-semibold mb-2">Plano "{todayPlan.plan_name}" criado!</h4>
-                <p className="text-muted-foreground mb-2">
-                  Agora vamos adicionar as refeições do dia
-                </p>
-                <p className="text-sm text-muted-foreground mb-6">
-                  Crie 6 refeições padrão para começar a montar seu cardápio
-                </p>
-                <Button 
-                  size="lg"
-                  onClick={handleAddMealsToExistingPlan}
-                  disabled={addingMeals}
-                >
-                  {addingMeals ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                      Criando refeições...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Criar Refeições do Dia
-                    </>
-                  )}
-                </Button>
+                
+                {mealSuggestions.length === 0 ? (
+                  <>
+                    <p className="text-muted-foreground mb-2">
+                      Gere sugestões personalizadas de refeições
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      A IA vai criar receitas baseadas no seu perfil e itens da despensa
+                    </p>
+                    <Button 
+                      size="lg"
+                      onClick={handleGenerateAIMealSuggestions}
+                      disabled={generatingSuggestions}
+                    >
+                      {generatingSuggestions ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          Gerando sugestões...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Gerar Sugestões com IA
+                        </>
+                      )}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-muted-foreground mb-2">
+                      {mealSuggestions.length} sugestões disponíveis
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      Veja as receitas personalizadas criadas para você
+                    </p>
+                    <div className="flex gap-3 justify-center flex-wrap">
+                      <Button 
+                        size="lg"
+                        onClick={() => navigate('/sugestoes-refeicoes')}
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Ver Sugestões
+                      </Button>
+                      <Button 
+                        size="lg"
+                        variant="outline"
+                        onClick={handleGenerateAIMealSuggestions}
+                        disabled={generatingSuggestions}
+                      >
+                        Gerar Novas
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               // Nenhum plano para hoje

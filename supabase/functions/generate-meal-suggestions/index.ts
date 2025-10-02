@@ -209,7 +209,7 @@ Retorne APENAS um JSON válido no seguinte formato (sem markdown, sem explicaç�
     // Save suggestions to database
     const suggestionsToSave = parsedSuggestions.suggestions.map((suggestion: any) => ({
       user_id: user.id,
-      suggestion_type: suggestion.meal_type || 'geral',
+      suggestion_type: 'meal',
       suggested_meal: {
         name: suggestion.name,
         ingredients: suggestion.ingredients,
