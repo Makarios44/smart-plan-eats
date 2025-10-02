@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useUserRole } from "@/hooks/useUserRole";
 import { Badge } from "@/components/ui/badge";
 
 interface UserProfile {
@@ -32,10 +31,10 @@ interface Meal {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { role, organizations } = useUserRole();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -57,6 +56,21 @@ const Dashboard = () => {
       if (!session) {
         navigate("/auth");
         return;
+      }
+
+      // Load user role
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id);
+
+      if (roles && roles.length > 0) {
+        const roleHierarchy = ["admin", "nutricionista", "usuario"];
+        const highestRole = roles
+          .map(r => r.role)
+          .sort((a, b) => roleHierarchy.indexOf(a) - roleHierarchy.indexOf(b))[0];
+        
+        setUserRole(highestRole);
       }
 
       // Load profile
@@ -149,9 +163,9 @@ const Dashboard = () => {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold">Olá, {profile.name}! 👋</h1>
-              {role && (
-                <Badge variant={role === 'admin' ? 'default' : role === 'nutricionista' ? 'secondary' : 'outline'}>
-                  {role === 'admin' ? 'Admin' : role === 'nutricionista' ? 'Nutricionista' : 'Usuário'}
+              {userRole && (
+                <Badge variant={userRole === 'admin' ? 'default' : userRole === 'nutricionista' ? 'secondary' : 'outline'}>
+                  {userRole === 'admin' ? 'Admin' : userRole === 'nutricionista' ? 'Nutricionista' : 'Usuário'}
                 </Badge>
               )}
             </div>
@@ -167,9 +181,9 @@ const Dashboard = () => {
         </div>
 
         {/* Role-specific panels */}
-        {(role === 'admin' || role === 'nutricionista') && (
+        {(userRole === 'admin' || userRole === 'nutricionista') && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {role === 'admin' && (
+            {userRole === 'admin' && (
               <Card 
                 className="p-6 bg-gradient-to-r from-blue-500/10 to-blue-600/10 border-blue-500/20 cursor-pointer hover:scale-105 transition-transform" 
                 onClick={() => navigate("/admin")}
@@ -180,7 +194,7 @@ const Dashboard = () => {
               </Card>
             )}
             
-            {role === 'nutricionista' && (
+            {userRole === 'nutricionista' && (
               <Card 
                 className="p-6 bg-gradient-to-r from-green-500/10 to-green-600/10 border-green-500/20 cursor-pointer hover:scale-105 transition-transform" 
                 onClick={() => navigate("/nutricionista")}

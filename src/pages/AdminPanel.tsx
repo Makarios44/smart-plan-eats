@@ -1,60 +1,50 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Users, Building2, UserPlus, Shield } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { useUserRole } from "@/hooks/useUserRole";
+import { ArrowLeft, Building2, Users, UserPlus, Shield } from "lucide-react";
 
 interface Organization {
   id: string;
   name: string;
-  owner_id: string;
   created_at: string;
 }
 
 interface Member {
-  id: string;
   user_id: string;
-  email: string;
-  role: string;
-  organization_id: string;
+  profiles: {
+    name: string;
+  };
+  user_roles: Array<{
+    role: string;
+  }>;
 }
 
 const AdminPanel = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { role, loading: roleLoading } = useUserRole();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
-  const [newOrgName, setNewOrgName] = useState("");
   const [selectedOrg, setSelectedOrg] = useState<string>("");
-  const [newMemberEmail, setNewMemberEmail] = useState("");
-  const [newMemberRole, setNewMemberRole] = useState<string>("usuario");
-  const [loading, setLoading] = useState(false);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newOrgName, setNewOrgName] = useState("");
 
   useEffect(() => {
-    if (!roleLoading && role !== 'admin') {
-      toast({
-        variant: "destructive",
-        title: "Acesso negado",
-        description: "Você não tem permissão para acessar esta página.",
-      });
-      navigate('/dashboard');
-    }
-  }, [role, roleLoading, navigate, toast]);
-
-  useEffect(() => {
-    if (role === 'admin') {
-      loadOrganizations();
-    }
-  }, [role]);
+    checkAdminAccess();
+    loadOrganizations();
+  }, []);
 
   useEffect(() => {
     if (selectedOrg) {
@@ -62,43 +52,73 @@ const AdminPanel = () => {
     }
   }, [selectedOrg]);
 
+  const checkAdminAccess = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+
+    const isAdmin = roles?.some(r => r.role === "admin");
+    if (!isAdmin) {
+      toast({
+        variant: "destructive",
+        title: "Acesso negado",
+        description: "Você não tem permissão para acessar esta página.",
+      });
+      navigate("/dashboard");
+    }
+  };
+
   const loadOrganizations = async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('organizations')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from("organizations")
+        .select("*")
+        .order("name");
 
       if (error) throw error;
       setOrganizations(data || []);
+      if (data && data.length > 0 && !selectedOrg) {
+        setSelectedOrg(data[0].id);
+      }
     } catch (error: any) {
-      console.error('Error loading organizations:', error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Erro ao carregar organizações.",
+        description: error.message,
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   const loadMembers = async () => {
+    if (!selectedOrg) return;
+
     try {
-      const { data: rolesData, error } = await supabase
-        .from('user_roles')
-        .select('id, user_id, role, organization_id')
-        .eq('organization_id', selectedOrg);
+      const { data, error } = await supabase
+        .from("organization_members")
+        .select(`
+          user_id,
+          profiles!inner(name),
+          user_roles!inner(role)
+        `)
+        .eq("organization_id", selectedOrg);
 
       if (error) throw error;
-
-      // Get user emails (this is simplified - in production you'd need a proper way to get user info)
-      const membersWithEmails = rolesData || [];
-      setMembers(membersWithEmails as any);
+      setMembers(data as any || []);
     } catch (error: any) {
-      console.error('Error loading members:', error);
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Erro ao carregar membros.",
+        title: "Erro ao carregar membros",
+        description: error.message,
       });
     }
   };
@@ -108,24 +128,41 @@ const AdminPanel = () => {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Nome da organização é obrigatório.",
+        description: "Nome da organização é obrigatório",
       });
       return;
     }
 
-    setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Não autenticado');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-      const { error } = await supabase
-        .from('organizations')
+      const { data: org, error: orgError } = await supabase
+        .from("organizations")
+        .insert({ name: newOrgName, owner_id: user.id })
+        .select()
+        .single();
+
+      if (orgError) throw orgError;
+
+      const { error: roleError } = await supabase
+        .from("user_roles")
         .insert({
-          name: newOrgName,
-          owner_id: session.user.id,
+          user_id: user.id,
+          role: "admin",
+          organization_id: org.id,
         });
 
-      if (error) throw error;
+      if (roleError) throw roleError;
+
+      const { error: memberError } = await supabase
+        .from("organization_members")
+        .insert({
+          user_id: user.id,
+          organization_id: org.id,
+        });
+
+      if (memberError) throw memberError;
 
       toast({
         title: "Sucesso!",
@@ -135,53 +172,31 @@ const AdminPanel = () => {
       setNewOrgName("");
       loadOrganizations();
     } catch (error: any) {
-      console.error('Error creating organization:', error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Erro ao criar organização.",
+        description: error.message,
       });
-    } finally {
-      setLoading(false);
     }
   };
 
-  const addMember = async () => {
-    if (!selectedOrg || !newMemberEmail.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Selecione uma organização e informe o email do membro.",
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // In a real app, you'd need to look up the user by email first
-      // This is simplified for demonstration
-      toast({
-        title: "Info",
-        description: "Funcionalidade de adicionar membro requer implementação de lookup de usuário por email.",
-      });
-    } catch (error: any) {
-      console.error('Error adding member:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Erro ao adicionar membro.",
-      });
-    } finally {
-      setLoading(false);
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case "admin":
+        return "bg-red-500";
+      case "nutricionista":
+        return "bg-blue-500";
+      default:
+        return "bg-gray-500";
     }
   };
 
-  if (roleLoading || role !== 'admin') {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Verificando permissões...</p>
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );
@@ -191,7 +206,7 @@ const AdminPanel = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate('/dashboard')} className="gap-2">
+          <Button variant="ghost" onClick={() => navigate("/dashboard")} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Voltar
           </Button>
@@ -200,150 +215,76 @@ const AdminPanel = () => {
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2">
             <Shield className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-bold">Painel do Administrador</h1>
+            <h1 className="text-4xl font-bold">Painel de Administração</h1>
           </div>
-          <p className="text-muted-foreground">
-            Gerenciamento de organizações, membros e permissões
-          </p>
+          <p className="text-muted-foreground">Gerencie organizações, usuários e permissões</p>
         </div>
 
-        {/* Create Organization */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5" />
-              Criar Nova Organização
+              Organizações
             </CardTitle>
-            <CardDescription>
-              Crie uma nova organização para gerenciar clientes e nutricionistas
-            </CardDescription>
+            <CardDescription>Gerencie suas organizações</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <Label htmlFor="orgName">Nome da Organização</Label>
-                <Input
-                  id="orgName"
-                  value={newOrgName}
-                  onChange={(e) => setNewOrgName(e.target.value)}
-                  placeholder="Ex: Clínica de Nutrição XYZ"
-                />
-              </div>
-              <Button onClick={createOrganization} disabled={loading} className="mt-auto">
-                Criar Organização
-              </Button>
+          <CardContent className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Nome da nova organização"
+                value={newOrgName}
+                onChange={(e) => setNewOrgName(e.target.value)}
+              />
+              <Button onClick={createOrganization}>Criar</Button>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Organização Selecionada</Label>
+              <Select value={selectedOrg} onValueChange={setSelectedOrg}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma organização" />
+                </SelectTrigger>
+                <SelectContent>
+                  {organizations.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>
+                      {org.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
 
-        {/* Organizations List */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              Organizações ({organizations.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {organizations.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                Nenhuma organização criada ainda
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {organizations.map((org) => (
-                  <Card
-                    key={org.id}
-                    className={`p-4 cursor-pointer transition-all ${
-                      selectedOrg === org.id ? 'border-primary bg-primary/5' : ''
-                    }`}
-                    onClick={() => setSelectedOrg(org.id)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold">{org.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Criada em {new Date(org.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      {selectedOrg === org.id && <Badge>Selecionada</Badge>}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Manage Members */}
         {selectedOrg && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Gerenciar Membros
+                Membros da Organização
               </CardTitle>
-              <CardDescription>
-                Adicione e gerencie membros da organização selecionada
-              </CardDescription>
+              <CardDescription>Gerencie membros e suas permissões</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <Label htmlFor="memberEmail">Email do Membro</Label>
-                  <Input
-                    id="memberEmail"
-                    type="email"
-                    value={newMemberEmail}
-                    onChange={(e) => setNewMemberEmail(e.target.value)}
-                    placeholder="usuario@email.com"
-                  />
-                </div>
-                <div className="w-48">
-                  <Label htmlFor="memberRole">Role</Label>
-                  <Select value={newMemberRole} onValueChange={setNewMemberRole}>
-                    <SelectTrigger id="memberRole">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="nutricionista">Nutricionista</SelectItem>
-                      <SelectItem value="usuario">Usuário</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button onClick={addMember} disabled={loading} className="mt-auto">
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Adicionar
-                </Button>
-              </div>
-
-              {members.length > 0 && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Usuário ID</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {members.map((member) => (
-                      <TableRow key={member.id}>
-                        <TableCell className="font-mono text-xs">{member.user_id}</TableCell>
-                        <TableCell>
-                          <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
-                            {member.role}
+              <div className="space-y-2">
+                {members.map((member) => (
+                  <div
+                    key={member.user_id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div>
+                      <p className="font-semibold">{member.profiles.name}</p>
+                      <div className="flex gap-2 mt-1">
+                        {member.user_roles.map((ur, idx) => (
+                          <Badge key={idx} className={getRoleBadgeColor(ur.role)}>
+                            {ur.role}
                           </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">Remover</Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}
