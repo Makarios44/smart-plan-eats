@@ -19,6 +19,7 @@ import SugestoesIA from "./pages/SugestoesIA";
 import Insights from "./pages/Insights";
 import ResetPassword from "./pages/ResetPassword";
 import Settings from "./pages/Settings";
+import MeusPlanos from "./pages/MeusPlanos";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/plano" element={<PlanoAlimentar />} />
+          <Route path="/meus-planos" element={<MeusPlanos />} />
           <Route path="/evolucao" element={<Evolucao />} />
           <Route path="/lista-compras" element={<ListaCompras />} />
           <Route path="/feedback-semanal" element={<FeedbackSemanal />} />

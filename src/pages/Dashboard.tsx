@@ -148,8 +148,11 @@ const Dashboard = () => {
             <p className="text-muted-foreground">Acompanhe seu progresso hoje</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => navigate("/plano")} className="flex-1 md:flex-initial">
-              Ver Plano Completo
+            <Button onClick={() => navigate("/meus-planos")} variant="default" className="flex-1 md:flex-initial">
+              Meus Planos
+            </Button>
+            <Button onClick={() => navigate("/plano")} variant="outline" className="flex-1 md:flex-initial">
+              Plano de Hoje
             </Button>
             <Button variant="outline" onClick={() => navigate("/settings")} className="hidden md:flex">
               <SettingsIcon className="w-4 h-4 mr-2" />
@@ -244,9 +247,9 @@ const Dashboard = () => {
               <p className="text-muted-foreground mb-4">
                 Você ainda não tem um plano para hoje
               </p>
-              <Button onClick={() => toast.info("Em breve: gerar novo plano")}>
-                Gerar Plano de Hoje
-              </Button>
+              <p className="text-sm text-muted-foreground mb-4">
+                Seu primeiro plano foi criado no onboarding. Vamos gerar automaticamente novos planos diários em breve!
+              </p>
             </div>
           ) : (
             <div className="space-y-3">

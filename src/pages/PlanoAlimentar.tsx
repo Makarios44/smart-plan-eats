@@ -141,13 +141,13 @@ const PlanoAlimentar = () => {
           </div>
         </div>
 
-        {meals.length === 0 ? (
+          {meals.length === 0 ? (
           <Card className="p-12 text-center">
             <p className="text-lg text-muted-foreground mb-4">
               Você ainda não tem um plano alimentar para hoje
             </p>
-            <Button onClick={() => toast.info("Em breve: gerar novo plano")}>
-              Gerar Plano de Hoje
+            <Button onClick={() => navigate("/dashboard")}>
+              Voltar ao Dashboard
             </Button>
           </Card>
         ) : (
