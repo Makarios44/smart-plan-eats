@@ -141,20 +141,22 @@ const Auth = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!resetEmail) {
+    const cleanEmail = resetEmail.trim().replace(/[,;]+$/, ''); // Remove vírgulas e espaços
+    
+    if (!cleanEmail) {
       toast.error("Por favor, insira seu e-mail");
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(resetEmail)) {
+    if (!emailRegex.test(cleanEmail)) {
       toast.error("Por favor, insira um e-mail válido");
       return;
     }
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
         redirectTo: `${window.location.origin}/auth/reset-password`,
       });
 
