@@ -8,6 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Trash2, ShoppingBasket } from "lucide-react";
+import { z } from "zod";
+
+const pantryItemSchema = z.object({
+  food_name: z.string().trim().min(1, "Nome do alimento é obrigatório").max(100, "Nome muito longo"),
+  category: z.string().min(1, "Selecione uma categoria"),
+  quantity: z.string().optional().refine((val) => {
+    if (!val) return true;
+    const num = parseFloat(val);
+    return num > 0 && num <= 10000;
+  }, "Quantidade deve ser positiva e menor que 10000"),
+  unit: z.string(),
+});
 
 interface PantryItem {
   id: string;
@@ -60,17 +72,22 @@ export default function MinhaDespensa() {
       if (error) throw error;
       setPantryItems(data || []);
     } catch (error) {
-      console.error('Error loading pantry:', error);
+      // Silent fail for loading
     }
   };
 
   const handleAddItem = async () => {
-    if (!newItem.food_name || !newItem.category) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha o nome e categoria do alimento",
-        variant: "destructive"
-      });
+    // Validate with zod
+    try {
+      pantryItemSchema.parse(newItem);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Erro de validação",
+          description: error.errors[0].message,
+          variant: "destructive"
+        });
+      }
       return;
     }
 
@@ -99,7 +116,6 @@ export default function MinhaDespensa() {
       setNewItem({ food_name: "", category: "", quantity: "", unit: "g" });
       loadPantry();
     } catch (error) {
-      console.error('Error adding item:', error);
       toast({
         title: "Erro ao adicionar",
         description: error instanceof Error ? error.message : "Tente novamente",
@@ -126,7 +142,6 @@ export default function MinhaDespensa() {
 
       loadPantry();
     } catch (error) {
-      console.error('Error deleting item:', error);
       toast({
         title: "Erro ao remover",
         description: "Tente novamente",

@@ -9,6 +9,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, TrendingUp, Battery, Heart, Target } from "lucide-react";
+import { z } from "zod";
+
+const feedbackSchema = z.object({
+  currentWeight: z.string().refine((val) => {
+    const num = parseFloat(val);
+    return num >= 20 && num <= 300;
+  }, "Peso deve estar entre 20 e 300 kg"),
+  energyLevel: z.number().min(1).max(5),
+  hungerSatisfaction: z.number().min(1).max(5),
+  adherenceLevel: z.number().min(1).max(5),
+  notes: z.string().max(500, "Observações muito longas (máximo 500 caracteres)").optional(),
+});
 
 export default function FeedbackSemanal() {
   const navigate = useNavigate();
@@ -22,6 +34,27 @@ export default function FeedbackSemanal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate with zod
+    try {
+      feedbackSchema.parse({
+        currentWeight,
+        energyLevel: energyLevel[0],
+        hungerSatisfaction: hungerSatisfaction[0],
+        adherenceLevel: adherenceLevel[0],
+        notes,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Erro de validação",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -56,7 +89,6 @@ export default function FeedbackSemanal() {
 
       navigate('/dashboard');
     } catch (error) {
-      console.error('Error submitting feedback:', error);
       toast({
         title: "Erro ao processar feedback",
         description: error instanceof Error ? error.message : "Tente novamente",

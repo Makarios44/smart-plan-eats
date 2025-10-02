@@ -7,6 +7,19 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, KeyRound, Eye, EyeOff } from "lucide-react";
+import { z } from "zod";
+
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Senha atual é obrigatória"),
+  newPassword: z.string().min(6, "A nova senha deve ter no mínimo 6 caracteres").max(72, "Senha muito longa"),
+  confirmPassword: z.string().min(1, "Confirmação é obrigatória"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"],
+}).refine((data) => data.currentPassword !== data.newPassword, {
+  message: "A nova senha deve ser diferente da atual",
+  path: ["newPassword"],
+});
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -20,43 +33,19 @@ const Settings = () => {
   const [loading, setLoading] = useState(false);
 
   const validatePasswordChange = () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Por favor, preencha todos os campos",
-      });
+    try {
+      passwordSchema.parse({ currentPassword, newPassword, confirmPassword });
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: error.errors[0].message,
+        });
+      }
       return false;
     }
-
-    if (newPassword.length < 6) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "A nova senha deve ter no mínimo 6 caracteres",
-      });
-      return false;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "As senhas não coincidem",
-      });
-      return false;
-    }
-
-    if (currentPassword === newPassword) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "A nova senha deve ser diferente da atual",
-      });
-      return false;
-    }
-
-    return true;
   };
 
   const handleChangePassword = async () => {

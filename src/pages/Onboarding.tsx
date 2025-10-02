@@ -9,6 +9,29 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card } from "@/components/ui/card";
 import { ChevronRight, ChevronLeft, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
+
+const profileSchema = z.object({
+  name: z.string().trim().min(1, "Nome é obrigatório").max(100, "Nome muito longo"),
+  age: z.string().refine((val) => {
+    const num = parseInt(val);
+    return num >= 13 && num <= 120;
+  }, "Idade deve estar entre 13 e 120 anos"),
+  gender: z.enum(["male", "female"], { required_error: "Selecione o sexo" }),
+  weight: z.string().refine((val) => {
+    const num = parseFloat(val);
+    return num >= 20 && num <= 300;
+  }, "Peso deve estar entre 20 e 300 kg"),
+  height: z.string().refine((val) => {
+    const num = parseFloat(val);
+    return num >= 100 && num <= 250;
+  }, "Altura deve estar entre 100 e 250 cm"),
+  activityLevel: z.string().min(1, "Selecione o nível de atividade"),
+  workType: z.string().min(1, "Selecione o tipo de trabalho"),
+  goal: z.string().min(1, "Selecione seu objetivo"),
+  dietType: z.string().optional(),
+  restrictions: z.array(z.string()).default([]),
+});
 
 type OnboardingStep = "personal" | "activity" | "goal" | "preferences";
 
@@ -97,17 +120,21 @@ const Onboarding = () => {
   };
 
   const handleNext = () => {
-    // Validate current step
-    if (step === "personal" && (!formData.name || !formData.age || !formData.gender || !formData.weight || !formData.height)) {
-      toast.error("Por favor, preencha todos os campos");
-      return;
-    }
-    if (step === "activity" && (!formData.activityLevel || !formData.workType)) {
-      toast.error("Por favor, selecione suas informações de atividade");
-      return;
-    }
-    if (step === "goal" && !formData.goal) {
-      toast.error("Por favor, selecione seu objetivo");
+    // Validate current step with zod
+    try {
+      if (step === "personal") {
+        profileSchema.pick({ name: true, age: true, gender: true, weight: true, height: true }).parse(formData);
+      }
+      if (step === "activity") {
+        profileSchema.pick({ activityLevel: true, workType: true }).parse(formData);
+      }
+      if (step === "goal") {
+        profileSchema.pick({ goal: true }).parse(formData);
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
       return;
     }
 
@@ -185,7 +212,6 @@ const Onboarding = () => {
       });
 
       if (mealPlanError) {
-        console.error("Meal plan error:", mealPlanError);
         toast.warning("Perfil salvo! Você pode gerar seu plano depois.");
       } else if (mealPlanData) {
         // Save meal plan to database
@@ -205,7 +231,6 @@ const Onboarding = () => {
           .single();
 
         if (planError || !planData) {
-          console.error("Plan save error:", planError);
           throw new Error("Erro ao salvar plano");
         }
 
@@ -223,7 +248,6 @@ const Onboarding = () => {
             .single();
 
           if (mealError || !mealData) {
-            console.error("Meal save error:", mealError);
             continue;
           }
 
@@ -245,7 +269,6 @@ const Onboarding = () => {
       toast.success("Perfil criado com sucesso!");
       navigate("/dashboard");
     } catch (error: any) {
-      console.error("Error:", error);
       toast.error(error.message || "Erro ao criar perfil");
     } finally {
       setLoading(false);
