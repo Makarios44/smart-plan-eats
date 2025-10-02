@@ -22,7 +22,7 @@ export const AppLayout = ({ children, title, showBackButton = true }: AppLayoutP
 
   const navItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
-    { icon: Calendar, label: "Plano", path: "/plano" },
+    { icon: Calendar, label: "Meus Planos", path: "/meus-planos" },
     { icon: TrendingUp, label: "Evolução", path: "/evolucao" },
     { icon: MessageSquare, label: "Feedback", path: "/feedback-semanal" },
     { icon: ShoppingBasket, label: "Despensa", path: "/despensa" },
