@@ -89,6 +89,141 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Role Selection Section */}
+      <section className="py-20 px-6 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">Escolha seu Perfil</h2>
+            <p className="text-xl text-muted-foreground">Selecione o tipo de conta ideal para você</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Regular User Card */}
+            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-2 border-blue-500/20 hover:border-blue-500/40 transition-all duration-300 hover:shadow-xl">
+              <div className="p-8">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <Heart className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3">Usuário</h3>
+                <p className="text-muted-foreground mb-6">
+                  Planos personalizados e acompanhamento inteligente para seus objetivos de saúde
+                </p>
+                <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+                  <li className="flex items-center gap-2">
+                    <span className="text-blue-500">✓</span>
+                    <span>Plano alimentar personalizado</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-blue-500">✓</span>
+                    <span>Ajustes automáticos com IA</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-blue-500">✓</span>
+                    <span>Acompanhamento de progresso</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-blue-500">✓</span>
+                    <span>Lista de compras inteligente</span>
+                  </li>
+                </ul>
+                <Button 
+                  onClick={() => navigate("/auth")}
+                  className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
+                >
+                  Começar Agora
+                </Button>
+              </div>
+            </div>
+
+            {/* Nutritionist Card */}
+            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-2 border-green-500/20 hover:border-green-500/40 transition-all duration-300 hover:shadow-xl">
+              <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                PROFISSIONAL
+              </div>
+              <div className="p-8">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3">Nutricionista</h3>
+                <p className="text-muted-foreground mb-6">
+                  Gerencie múltiplos clientes com ferramentas avançadas e análises com IA
+                </p>
+                <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-500">✓</span>
+                    <span>Dashboard profissional</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-500">✓</span>
+                    <span>Gestão de múltiplos clientes</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-500">✓</span>
+                    <span>Análise de grupos com IA</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-500">✓</span>
+                    <span>Relatórios exportáveis</span>
+                  </li>
+                </ul>
+                <Button 
+                  onClick={() => navigate("/auth")}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                >
+                  Acessar Painel Profissional
+                </Button>
+              </div>
+            </div>
+
+            {/* Admin Card */}
+            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-2 border-purple-500/20 hover:border-purple-500/40 transition-all duration-300 hover:shadow-xl">
+              <div className="absolute top-0 right-0 bg-purple-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                EMPRESARIAL
+              </div>
+              <div className="p-8">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <Shield className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3">Administrador</h3>
+                <p className="text-muted-foreground mb-6">
+                  Controle total para clínicas, academias e empresas de nutrição
+                </p>
+                <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+                  <li className="flex items-center gap-2">
+                    <span className="text-purple-500">✓</span>
+                    <span>Dashboard administrativo</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-purple-500">✓</span>
+                    <span>Gestão de organizações</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-purple-500">✓</span>
+                    <span>Controle de permissões</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-purple-500">✓</span>
+                    <span>Métricas do sistema</span>
+                  </li>
+                </ul>
+                <Button 
+                  onClick={() => navigate("/auth")}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                >
+                  Acessar Painel Admin
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-12 p-6 bg-primary/5 rounded-xl border border-primary/20">
+            <p className="text-muted-foreground">
+              💡 <strong>Dica:</strong> Após o cadastro, você poderá escolher seu tipo de perfil e começar a usar imediatamente!
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* B2B Section */}
       <section className="py-20 px-6 bg-muted/30">
         <div className="max-w-6xl mx-auto">

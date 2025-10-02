@@ -71,6 +71,15 @@ const Dashboard = () => {
           .sort((a, b) => roleHierarchy.indexOf(a) - roleHierarchy.indexOf(b))[0];
         
         setUserRole(highestRole);
+
+        // Auto-redirect based on role
+        if (highestRole === "admin") {
+          navigate("/admin");
+          return;
+        } else if (highestRole === "nutricionista") {
+          navigate("/nutricionista");
+          return;
+        }
       }
 
       // Load profile
