@@ -150,8 +150,12 @@ export type Database = {
       meal_plans: {
         Row: {
           created_at: string | null
+          diet_type: string | null
           id: string
           plan_date: string
+          plan_description: string | null
+          plan_name: string | null
+          recommended_exercise: string | null
           total_calories: number
           total_carbs: number
           total_fats: number
@@ -160,8 +164,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          diet_type?: string | null
           id?: string
           plan_date: string
+          plan_description?: string | null
+          plan_name?: string | null
+          recommended_exercise?: string | null
           total_calories: number
           total_carbs: number
           total_fats: number
@@ -170,8 +178,12 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          diet_type?: string | null
           id?: string
           plan_date?: string
+          plan_description?: string | null
+          plan_name?: string | null
+          recommended_exercise?: string | null
           total_calories?: number
           total_carbs?: number
           total_fats?: number
