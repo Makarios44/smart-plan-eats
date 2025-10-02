@@ -1,11 +1,12 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Apple, Flame, Droplets, Activity, TrendingUp, Calendar, LogOut, MessageSquare, AlertCircle, History, ShoppingBasket, Sparkles, Brain, Settings as SettingsIcon } from "lucide-react";
+import { Apple, Flame, Droplets, Activity, TrendingUp, Calendar, LogOut, MessageSquare, AlertCircle, History, ShoppingBasket, Sparkles, Brain, Settings as SettingsIcon, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { GeneratePlanDialog } from "@/components/GeneratePlanDialog";
 
 interface UserProfile {
   name: string;
@@ -244,12 +245,22 @@ const Dashboard = () => {
           
           {meals.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">
+              <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground mb-2">
                 Você ainda não tem um plano para hoje
               </p>
-              <p className="text-sm text-muted-foreground mb-4">
-                Seu primeiro plano foi criado no onboarding. Vamos gerar automaticamente novos planos diários em breve!
+              <p className="text-sm text-muted-foreground mb-6">
+                Crie um plano alimentar para começar a acompanhar suas refeições
               </p>
+              <GeneratePlanDialog 
+                onPlanCreated={loadData}
+                trigger={
+                  <Button size="lg">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Criar Plano de Hoje
+                  </Button>
+                }
+              />
             </div>
           ) : (
             <div className="space-y-3">
