@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Apple, Flame, Droplets, Activity, TrendingUp, Calendar, LogOut, MessageSquare, AlertCircle, History, ShoppingBasket, Sparkles, Brain, Shield, Users } from "lucide-react";
+import { Apple, Flame, Droplets, Activity, TrendingUp, Calendar, LogOut, MessageSquare, AlertCircle, History, ShoppingBasket, Sparkles, Brain, Shield, Users, Settings as SettingsIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -173,6 +173,10 @@ const Dashboard = () => {
           </div>
           <div className="flex gap-2">
             <Button onClick={() => navigate("/plano")}>Ver Plano Completo</Button>
+            <Button variant="outline" onClick={() => navigate("/settings")}>
+              <SettingsIcon className="w-4 h-4 mr-2" />
+              Configurações
+            </Button>
             <Button variant="outline" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-2" />
               Sair

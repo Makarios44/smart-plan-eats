@@ -19,6 +19,8 @@ import SugestoesIA from "./pages/SugestoesIA";
 import Insights from "./pages/Insights";
 import AdminPanel from "./pages/AdminPanel";
 import NutritionistPanel from "./pages/NutritionistPanel";
+import ResetPassword from "./pages/ResetPassword";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +46,8 @@ const App = () => (
           <Route path="/insights" element={<Insights />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/nutricionista" element={<NutritionistPanel />} />
+          <Route path="/auth/reset-password" element={<ResetPassword />} />
+          <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

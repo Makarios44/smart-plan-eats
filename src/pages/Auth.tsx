@@ -7,13 +7,24 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Sparkles, LogIn, UserPlus } from "lucide-react";
+import { Sparkles, LogIn, UserPlus, Mail } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const Auth = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
 
   useEffect(() => {
     // Check if user is already logged in
@@ -109,6 +120,58 @@ const Auth = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+
+      if (error) {
+        toast.error(error.message);
+      }
+    } catch (error: any) {
+      toast.error("Erro ao fazer login com Google. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!resetEmail) {
+      toast.error("Por favor, insira seu e-mail");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(resetEmail)) {
+      toast.error("Por favor, insira um e-mail válido");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("E-mail de recuperação enviado! Verifique sua caixa de entrada.");
+        setShowForgotPassword(false);
+        setResetEmail("");
+      }
+    } catch (error: any) {
+      toast.error("Erro ao enviar e-mail de recuperação. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-8 shadow-lg animate-fade-in">
@@ -163,6 +226,33 @@ const Auth = () => {
                 </>
               )}
             </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Ou continue com</span>
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full"
+            >
+              <FcGoogle className="mr-2 h-5 w-5" />
+              Google
+            </Button>
+
+            <Button
+              variant="link"
+              onClick={() => setShowForgotPassword(true)}
+              className="w-full text-sm"
+            >
+              Esqueceu sua senha?
+            </Button>
           </TabsContent>
 
           <TabsContent value="signup" className="space-y-4">
@@ -203,6 +293,25 @@ const Auth = () => {
                 </>
               )}
             </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Ou continue com</span>
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full"
+            >
+              <FcGoogle className="mr-2 h-5 w-5" />
+              Google
+            </Button>
           </TabsContent>
         </Tabs>
 
@@ -216,6 +325,44 @@ const Auth = () => {
           </Button>
         </div>
       </Card>
+
+      {/* Forgot Password Dialog */}
+      <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Recuperar Senha</DialogTitle>
+            <DialogDescription>
+              Digite seu e-mail para receber um link de recuperação de senha.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="reset-email">E-mail</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                placeholder="seu@email.com"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleForgotPassword()}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowForgotPassword(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleForgotPassword} disabled={loading}>
+              {loading ? "Enviando..." : (
+                <>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Enviar Link
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
