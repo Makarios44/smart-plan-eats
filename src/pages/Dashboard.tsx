@@ -74,7 +74,7 @@ const Dashboard = () => {
 
         // Auto-redirect based on role
         if (highestRole === "admin") {
-          navigate("/admin");
+          navigate("/x7k2p9m4n8q1");
           return;
         } else if (highestRole === "nutricionista") {
           navigate("/nutricionista");

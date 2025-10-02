@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+export type UserRole = 'admin' | 'nutricionista' | 'usuario' | null;
+
 interface Organization {
   organization_id: string;
   organization_name: string;
-  user_role: string;
+  user_role: UserRole;
 }
 
 export const useUserRole = () => {
-  const [role, setRole] = useState<string | null>(null);
+  const [role, setRole] = useState<UserRole>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
 

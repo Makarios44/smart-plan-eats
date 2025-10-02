@@ -22,6 +22,7 @@ import NutritionistPanel from "./pages/NutritionistPanel";
 import ResetPassword from "./pages/ResetPassword";
 import Settings from "./pages/Settings";
 import SelectRole from "./pages/SelectRole";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -46,8 +47,22 @@ const App = () => (
           <Route path="/despensa" element={<MinhaDespensa />} />
           <Route path="/sugestoes-ia" element={<SugestoesIA />} />
           <Route path="/insights" element={<Insights />} />
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/nutricionista" element={<NutritionistPanel />} />
+          <Route 
+            path="/x7k2p9m4n8q1" 
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminPanel />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/nutricionista" 
+            element={
+              <ProtectedRoute requiredRole="nutricionista">
+                <NutritionistPanel />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="/auth/reset-password" element={<ResetPassword />} />
           <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
