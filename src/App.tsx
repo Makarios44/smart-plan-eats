@@ -11,6 +11,9 @@ import PlanoAlimentar from "./pages/PlanoAlimentar";
 import Evolucao from "./pages/Evolucao";
 import ListaCompras from "./pages/ListaCompras";
 import NotFound from "./pages/NotFound";
+import FeedbackSemanal from "./pages/FeedbackSemanal";
+import RestricoesDietarias from "./pages/RestricoesDietarias";
+import HistoricoAjustes from "./pages/HistoricoAjustes";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +31,9 @@ const App = () => (
           <Route path="/plano" element={<PlanoAlimentar />} />
           <Route path="/evolucao" element={<Evolucao />} />
           <Route path="/lista-compras" element={<ListaCompras />} />
+          <Route path="/feedback-semanal" element={<FeedbackSemanal />} />
+          <Route path="/restricoes" element={<RestricoesDietarias />} />
+          <Route path="/historico-ajustes" element={<HistoricoAjustes />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

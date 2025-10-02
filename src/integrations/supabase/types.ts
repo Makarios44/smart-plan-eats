@@ -14,6 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      adjustment_history: {
+        Row: {
+          adjustment_date: string | null
+          adjustment_reason: string | null
+          created_at: string | null
+          feedback_id: string | null
+          id: string
+          new_calories: number
+          new_carbs: number
+          new_fats: number
+          new_protein: number
+          previous_calories: number
+          previous_carbs: number
+          previous_fats: number
+          previous_protein: number
+          user_id: string
+        }
+        Insert: {
+          adjustment_date?: string | null
+          adjustment_reason?: string | null
+          created_at?: string | null
+          feedback_id?: string | null
+          id?: string
+          new_calories: number
+          new_carbs: number
+          new_fats: number
+          new_protein: number
+          previous_calories: number
+          previous_carbs: number
+          previous_fats: number
+          previous_protein: number
+          user_id: string
+        }
+        Update: {
+          adjustment_date?: string | null
+          adjustment_reason?: string | null
+          created_at?: string | null
+          feedback_id?: string | null
+          id?: string
+          new_calories?: number
+          new_carbs?: number
+          new_fats?: number
+          new_protein?: number
+          previous_calories?: number
+          previous_carbs?: number
+          previous_fats?: number
+          previous_protein?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adjustment_history_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_feedback"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       food_items: {
         Row: {
           amount: string
@@ -219,6 +278,42 @@ export type Database = {
           notes?: string | null
           user_id?: string
           weight?: number
+        }
+        Relationships: []
+      }
+      weekly_feedback: {
+        Row: {
+          adherence_level: number
+          created_at: string | null
+          current_weight: number
+          energy_level: number
+          hunger_satisfaction: number
+          id: string
+          notes: string | null
+          user_id: string
+          week_date: string
+        }
+        Insert: {
+          adherence_level: number
+          created_at?: string | null
+          current_weight: number
+          energy_level: number
+          hunger_satisfaction: number
+          id?: string
+          notes?: string | null
+          user_id: string
+          week_date: string
+        }
+        Update: {
+          adherence_level?: number
+          created_at?: string | null
+          current_weight?: number
+          energy_level?: number
+          hunger_satisfaction?: number
+          id?: string
+          notes?: string | null
+          user_id?: string
+          week_date?: string
         }
         Relationships: []
       }

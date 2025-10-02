@@ -2,3 +2,6 @@ project_id = "qtsxwyekivsnjdlpwdjl"
 
 [functions.generate-meal-plan]
 verify_jwt = true
+
+[functions.process-weekly-feedback]
+verify_jwt = true

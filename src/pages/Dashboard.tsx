@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Apple, Flame, Droplets, Activity, TrendingUp, Calendar, LogOut } from "lucide-react";
+import { Apple, Flame, Droplets, Activity, TrendingUp, Calendar, LogOut, MessageSquare, AlertCircle, History } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -292,6 +292,39 @@ const Dashboard = () => {
             <p className="text-white/80">Organize suas compras da semana</p>
           </Card>
         </div>
+
+        {/* New Feedback & Adjustments Section */}
+        <Card className="p-6 bg-primary/5 border-primary/20">
+          <h3 className="text-xl font-bold mb-4">Ajuste seu Plano 🎯</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card 
+              className="p-4 cursor-pointer hover:shadow-lg transition-shadow bg-card" 
+              onClick={() => navigate("/feedback-semanal")}
+            >
+              <MessageSquare className="w-6 h-6 text-primary mb-2" />
+              <h4 className="font-semibold mb-1">Feedback Semanal</h4>
+              <p className="text-sm text-muted-foreground">Atualize seu plano automaticamente</p>
+            </Card>
+
+            <Card 
+              className="p-4 cursor-pointer hover:shadow-lg transition-shadow bg-card" 
+              onClick={() => navigate("/restricoes")}
+            >
+              <AlertCircle className="w-6 h-6 text-primary mb-2" />
+              <h4 className="font-semibold mb-1">Restrições</h4>
+              <p className="text-sm text-muted-foreground">Alergias e preferências</p>
+            </Card>
+
+            <Card 
+              className="p-4 cursor-pointer hover:shadow-lg transition-shadow bg-card" 
+              onClick={() => navigate("/historico-ajustes")}
+            >
+              <History className="w-6 h-6 text-primary mb-2" />
+              <h4 className="font-semibold mb-1">Histórico</h4>
+              <p className="text-sm text-muted-foreground">Veja mudanças no plano</p>
+            </Card>
+          </div>
+        </Card>
       </div>
     </div>
   );
