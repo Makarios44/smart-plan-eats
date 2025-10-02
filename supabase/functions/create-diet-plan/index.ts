@@ -14,22 +14,33 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
+
+    if (!authHeader) {
+      console.error('No authorization header provided');
+      return new Response(
+        JSON.stringify({ error: 'Authorization header is required' }), 
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const supabase = createClient(supabaseUrl, supabaseKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Get authenticated user using the JWT token
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
       console.error('Authentication error:', authError);
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }), 
+        JSON.stringify({ error: 'Unauthorized - Invalid or expired token' }), 
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log('Authenticated user:', user.id);
 
     const { plan_name, plan_description, diet_type, plan_date } = await req.json();
 
