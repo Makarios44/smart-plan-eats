@@ -237,6 +237,59 @@ const Index = () => {
       </section>
 
       {/* Footer */}
+            {/* Contact Section */}
+      <section className="py-20 px-4 md:px-6 bg-muted/20">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">Entre em Contato</h2>
+          <p className="text-lg text-muted-foreground mb-12">
+            Precisa de ajuda ou quer saber mais? Estamos aqui para você.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+            <div className="p-6 bg-white rounded-xl shadow-sm border">
+              <h3 className="text-xl font-bold mb-2">Suporte</h3>
+              <p className="text-muted-foreground">Entre em contato com nossa equipe de suporte:</p>
+              <ul className="mt-4 space-y-2">
+                <li>
+                  <strong>Email:</strong>{" "}
+                  <a href="mailto:support@nutrivita.com" className="text-primary hover:underline">
+                    support@nutrivita.com
+                  </a>
+                </li>
+                <li>
+                  <strong>Celular/WhatsApp:</strong>{" "}
+                  <a href="https://wa.me/5599999999999" target="_blank" className="text-primary hover:underline">
+                    +55 (99) 99999-9999
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div className="p-6 bg-white rounded-xl shadow-sm border">
+              <h3 className="text-xl font-bold mb-2">Institucional</h3>
+              <p className="text-muted-foreground">Saiba mais sobre nós e nossas políticas:</p>
+              <ul className="mt-4 space-y-2">
+                <li>
+                  <a href="/sobre" className="text-primary hover:underline">
+                    Sobre nós
+                  </a>
+                </li>
+                <li>
+                  <a href="/termos" className="text-primary hover:underline">
+                    Termos e Condições
+                  </a>
+                </li>
+                <li>
+                  <a href="/privacidade" className="text-primary hover:underline">
+                    Política de Privacidade
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <footer className="py-8 px-4 md:px-6 bg-background border-t">
         <div className="max-w-6xl mx-auto text-center text-muted-foreground">
           <p>&copy; 2025 NutriVita. Todos os direitos reservados.</p>
