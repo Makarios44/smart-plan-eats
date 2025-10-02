@@ -20,6 +20,7 @@ import Insights from "./pages/Insights";
 import ResetPassword from "./pages/ResetPassword";
 import Settings from "./pages/Settings";
 import MeusPlanos from "./pages/MeusPlanos";
+import PlanoDetalhes from "./pages/PlanoDetalhes";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/plano" element={<PlanoAlimentar />} />
           <Route path="/meus-planos" element={<MeusPlanos />} />
+          <Route path="/plano/:planId" element={<PlanoDetalhes />} />
           <Route path="/evolucao" element={<Evolucao />} />
           <Route path="/lista-compras" element={<ListaCompras />} />
           <Route path="/feedback-semanal" element={<FeedbackSemanal />} />

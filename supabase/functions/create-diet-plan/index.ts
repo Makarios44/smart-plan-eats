@@ -116,6 +116,21 @@ serve(async (req) => {
 
     console.log('Creating plan:', { user_id: user.id, plan_name, diet_type, plan_date });
 
+    // Check if plan already exists for this date
+    const { data: existingPlan } = await supabaseAdmin
+      .from('meal_plans')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('plan_date', plan_date)
+      .maybeSingle();
+
+    if (existingPlan) {
+      return new Response(
+        JSON.stringify({ error: 'Já existe um plano para esta data. Por favor, escolha outra data ou edite o plano existente.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Insert meal plan using admin client
     const { data: plan, error: insertError } = await supabaseAdmin
       .from('meal_plans')

@@ -173,10 +173,7 @@ const MeusPlanos = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        // Future: navigate to plan details
-                        toast.info("Visualização detalhada em breve");
-                      }}
+                      onClick={() => navigate(`/plano/${plan.id}`)}
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
