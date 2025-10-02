@@ -6,11 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Initialize Supabase client with service role key
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -18,6 +13,9 @@ serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
     // Verify POST method
     if (req.method !== 'POST') {
       return new Response(
@@ -38,8 +36,11 @@ serve(async (req) => {
 
     const token = authHeader.split(' ')[1];
 
+    // Create supabase admin client to verify user
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    
     // Verify user session
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     
     if (authError || !user) {
       console.error('Authentication failed:', authError?.message);
@@ -115,8 +116,8 @@ serve(async (req) => {
 
     console.log('Creating plan:', { user_id: user.id, plan_name, diet_type, plan_date });
 
-    // Insert meal plan
-    const { data: plan, error: insertError } = await supabase
+    // Insert meal plan using admin client
+    const { data: plan, error: insertError } = await supabaseAdmin
       .from('meal_plans')
       .insert({
         user_id: user.id,
