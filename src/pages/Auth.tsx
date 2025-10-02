@@ -84,7 +84,7 @@ const Auth = () => {
         }
       } else {
         toast.success("Conta criada com sucesso! Redirecionando...");
-        navigate("/onboarding");
+        navigate("/select-role");
       }
     } catch (error: any) {
       toast.error("Erro ao criar conta. Tente novamente.");

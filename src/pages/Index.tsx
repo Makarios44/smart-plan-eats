@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Apple, Target, TrendingUp, Sparkles, Zap, Heart } from "lucide-react";
+import { Apple, Target, TrendingUp, Sparkles, Zap, Heart, Users, Shield } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -85,36 +85,82 @@ const Index = () => {
                 Ajustes automáticos baseados no seu progresso e feedback semanal
               </p>
             </div>
+          </div>
+        </div>
+      </section>
 
-            <div className="p-6 rounded-xl bg-gradient-card shadow-md hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 rounded-lg bg-gradient-secondary flex items-center justify-center mb-4">
-                <Heart className="w-6 h-6 text-white" />
+      {/* B2B Section */}
+      <section className="py-20 px-6 bg-muted/30">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium text-primary">Para Profissionais</span>
+            </div>
+            <h2 className="text-4xl font-bold mb-4">Soluções B2B para Nutricionistas</h2>
+            <p className="text-xl text-muted-foreground">Gerencie múltiplos clientes com eficiência</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="p-8 rounded-xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20">
+              <div className="w-12 h-12 rounded-lg bg-green-500 flex items-center justify-center mb-4">
+                <Users className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Lista de Compras</h3>
-              <p className="text-muted-foreground">
-                Geração automática da lista de compras baseada no seu plano semanal
-              </p>
+              <h3 className="text-2xl font-bold mb-3">Painel do Nutricionista</h3>
+              <ul className="space-y-2 text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-1">✓</span>
+                  <span>Gestão centralizada de todos os clientes</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-1">✓</span>
+                  <span>Acompanhamento em tempo real</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-1">✓</span>
+                  <span>Insights e relatórios automatizados</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-1">✓</span>
+                  <span>Ajustes inteligentes com IA</span>
+                </li>
+              </ul>
             </div>
 
-            <div className="p-6 rounded-xl bg-gradient-card shadow-md hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 rounded-lg bg-gradient-primary flex items-center justify-center mb-4">
-                <Sparkles className="w-6 h-6 text-white" />
+            <div className="p-8 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+              <div className="w-12 h-12 rounded-lg bg-purple-500 flex items-center justify-center mb-4">
+                <Shield className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Integrações</h3>
-              <p className="text-muted-foreground">
-                Conecte com Google Fit e Apple Health para dados mais precisos
-              </p>
+              <h3 className="text-2xl font-bold mb-3">Gestão Empresarial</h3>
+              <ul className="space-y-2 text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-500 mt-1">✓</span>
+                  <span>Multi-tenant para clínicas e consultórios</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-500 mt-1">✓</span>
+                  <span>Controle de permissões e roles</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-500 mt-1">✓</span>
+                  <span>Dashboard administrativo completo</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-500 mt-1">✓</span>
+                  <span>Análises consolidadas da equipe</span>
+                </li>
+              </ul>
             </div>
+          </div>
 
-            <div className="p-6 rounded-xl bg-gradient-card shadow-md hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 rounded-lg bg-gradient-secondary flex items-center justify-center mb-4">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Resultados Reais</h3>
-              <p className="text-muted-foreground">
-                Acompanhe sua evolução com gráficos e relatórios detalhados
-              </p>
-            </div>
+          <div className="text-center mt-12">
+            <Button 
+              size="lg"
+              onClick={() => navigate("/auth")}
+              className="text-lg px-8 py-6"
+            >
+              Começar Teste Gratuito Para Profissionais
+            </Button>
           </div>
         </div>
       </section>

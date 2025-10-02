@@ -21,6 +21,7 @@ import AdminPanel from "./pages/AdminPanel";
 import NutritionistPanel from "./pages/NutritionistPanel";
 import ResetPassword from "./pages/ResetPassword";
 import Settings from "./pages/Settings";
+import SelectRole from "./pages/SelectRole";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/select-role" element={<SelectRole />} />
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/plano" element={<PlanoAlimentar />} />
