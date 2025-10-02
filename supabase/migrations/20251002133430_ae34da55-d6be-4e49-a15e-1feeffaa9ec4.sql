@@ -1,201 +1,60 @@
 -- ============================================
--- RLS POLICIES FOR MULTI-TIER ACCESS CONTROL
+-- FUNÇÕES DE SUPORTE A RLS (Row-Level Security)
 -- ============================================
 
--- PROFILES TABLE
--- Drop existing restrictive policies
-DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
-DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
-DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
+-- Função para checar se o usuário tem um papel global (ex: admin)
+CREATE OR REPLACE FUNCTION public.has_role(uid uuid, role_name text)
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.user_roles ur
+    WHERE ur.user_id = uid AND ur.role = role_name
+  );
+END;
+$$ LANGUAGE plpgsql STABLE;
 
--- Create new policies with admin and nutritionist access
-CREATE POLICY "Users can view their own profile"
-ON public.profiles
-FOR SELECT
-USING (
-  auth.uid() = user_id
-  OR public.has_role(auth.uid(), 'admin')
-  OR EXISTS (
-    SELECT 1 FROM public.client_assignments ca
-    WHERE ca.client_id = profiles.user_id
-    AND ca.nutritionist_id = auth.uid()
-    AND ca.active = true
-  )
-);
+-- Função para checar se usuário é dono da organização
+CREATE OR REPLACE FUNCTION public.is_org_owner(uid uuid, org_id uuid)
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.organization_members om
+    WHERE om.org_id = org_id
+      AND om.user_id = uid
+      AND om.role = 'owner'
+  );
+END;
+$$ LANGUAGE plpgsql STABLE;
 
-CREATE POLICY "Users can insert their own profile"
-ON public.profiles
-FOR INSERT
-WITH CHECK (auth.uid() = user_id);
+-- Função para checar se usuário é membro da organização
+CREATE OR REPLACE FUNCTION public.is_organization_member(uid uuid, org_id uuid)
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.organization_members om
+    WHERE om.org_id = org_id
+      AND om.user_id = uid
+      AND om.active = true
+  );
+END;
+$$ LANGUAGE plpgsql STABLE;
 
-CREATE POLICY "Users can update their own profile"
-ON public.profiles
-FOR UPDATE
-USING (
-  auth.uid() = user_id
-  OR public.has_role(auth.uid(), 'admin')
-  OR EXISTS (
-    SELECT 1 FROM public.client_assignments ca
-    WHERE ca.client_id = profiles.user_id
-    AND ca.nutritionist_id = auth.uid()
-    AND ca.active = true
-  )
-);
+-- Função para checar se usuário tem algum papel específico na organização
+CREATE OR REPLACE FUNCTION public.user_has_role_in_org(uid uuid, org_id uuid)
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.organization_members om
+    WHERE om.org_id = org_id
+      AND om.user_id = uid
+      AND om.role IS NOT NULL
+  );
+END;
+$$ LANGUAGE plpgsql STABLE;
 
--- MEAL PLANS TABLE
-DROP POLICY IF EXISTS "Users can view their own meal plans" ON public.meal_plans;
-DROP POLICY IF EXISTS "Users can insert their own meal plans" ON public.meal_plans;
-DROP POLICY IF EXISTS "Users can update their own meal plans" ON public.meal_plans;
-DROP POLICY IF EXISTS "Users can delete their own meal plans" ON public.meal_plans;
-
-CREATE POLICY "Users can view their own meal plans"
-ON public.meal_plans
-FOR SELECT
-USING (
-  auth.uid() = user_id
-  OR public.has_role(auth.uid(), 'admin')
-  OR EXISTS (
-    SELECT 1 FROM public.client_assignments ca
-    WHERE ca.client_id = meal_plans.user_id
-    AND ca.nutritionist_id = auth.uid()
-    AND ca.active = true
-  )
-);
-
-CREATE POLICY "Users can insert their own meal plans"
-ON public.meal_plans
-FOR INSERT
-WITH CHECK (
-  auth.uid() = user_id
-  OR public.has_role(auth.uid(), 'admin')
-  OR EXISTS (
-    SELECT 1 FROM public.client_assignments ca
-    WHERE ca.client_id = meal_plans.user_id
-    AND ca.nutritionist_id = auth.uid()
-    AND ca.active = true
-  )
-);
-
-CREATE POLICY "Users can update their own meal plans"
-ON public.meal_plans
-FOR UPDATE
-USING (
-  auth.uid() = user_id
-  OR public.has_role(auth.uid(), 'admin')
-  OR EXISTS (
-    SELECT 1 FROM public.client_assignments ca
-    WHERE ca.client_id = meal_plans.user_id
-    AND ca.nutritionist_id = auth.uid()
-    AND ca.active = true
-  )
-);
-
-CREATE POLICY "Users can delete their own meal plans"
-ON public.meal_plans
-FOR DELETE
-USING (
-  auth.uid() = user_id
-  OR public.has_role(auth.uid(), 'admin')
-);
-
--- PROGRESS TRACKING TABLE
-DROP POLICY IF EXISTS "Users can view their own progress" ON public.progress_tracking;
-DROP POLICY IF EXISTS "Users can insert their own progress" ON public.progress_tracking;
-DROP POLICY IF EXISTS "Users can update their own progress" ON public.progress_tracking;
-DROP POLICY IF EXISTS "Users can delete their own progress" ON public.progress_tracking;
-
-CREATE POLICY "Users can view their own progress"
-ON public.progress_tracking
-FOR SELECT
-USING (
-  auth.uid() = user_id
-  OR public.has_role(auth.uid(), 'admin')
-  OR EXISTS (
-    SELECT 1 FROM public.client_assignments ca
-    WHERE ca.client_id = progress_tracking.user_id
-    AND ca.nutritionist_id = auth.uid()
-    AND ca.active = true
-  )
-);
-
-CREATE POLICY "Users can insert their own progress"
-ON public.progress_tracking
-FOR INSERT
-WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own progress"
-ON public.progress_tracking
-FOR UPDATE
-USING (
-  auth.uid() = user_id
-  OR public.has_role(auth.uid(), 'admin')
-);
-
-CREATE POLICY "Users can delete their own progress"
-ON public.progress_tracking
-FOR DELETE
-USING (
-  auth.uid() = user_id
-  OR public.has_role(auth.uid(), 'admin')
-);
-
--- WEEKLY FEEDBACK TABLE
-DROP POLICY IF EXISTS "Users can view their own feedback" ON public.weekly_feedback;
-DROP POLICY IF EXISTS "Users can insert their own feedback" ON public.weekly_feedback;
-DROP POLICY IF EXISTS "Users can update their own feedback" ON public.weekly_feedback;
-DROP POLICY IF EXISTS "Users can delete their own feedback" ON public.weekly_feedback;
-
-CREATE POLICY "Users can view their own feedback"
-ON public.weekly_feedback
-FOR SELECT
-USING (
-  auth.uid() = user_id
-  OR public.has_role(auth.uid(), 'admin')
-  OR EXISTS (
-    SELECT 1 FROM public.client_assignments ca
-    WHERE ca.client_id = weekly_feedback.user_id
-    AND ca.nutritionist_id = auth.uid()
-    AND ca.active = true
-  )
-);
-
-CREATE POLICY "Users can insert their own feedback"
-ON public.weekly_feedback
-FOR INSERT
-WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own feedback"
-ON public.weekly_feedback
-FOR UPDATE
-USING (
-  auth.uid() = user_id
-  OR public.has_role(auth.uid(), 'admin')
-);
-
-CREATE POLICY "Users can delete their own feedback"
-ON public.weekly_feedback
-FOR DELETE
-USING (
-  auth.uid() = user_id
-  OR public.has_role(auth.uid(), 'admin')
-);
-
--- ADJUSTMENT HISTORY TABLE
-DROP POLICY IF EXISTS "Users can view their own adjustment history" ON public.adjustment_history;
-
-CREATE POLICY "Users can view their own adjustment history"
-ON public.adjustment_history
-FOR SELECT
-USING (
-  auth.uid() = user_id
-  OR public.has_role(auth.uid(), 'admin')
-  OR EXISTS (
-    SELECT 1 FROM public.client_assignments ca
-    WHERE ca.client_id = adjustment_history.user_id
-    AND ca.nutritionist_id = auth.uid()
-    AND ca.active = true
-  )
-);
+-- ============================================
+-- POLÍTICAS DE ACESSO (RLS)
+-- ============================================
 
 -- ORGANIZATIONS TABLE
 DROP POLICY IF EXISTS "Users can view their organizations" ON public.organizations;
@@ -205,24 +64,31 @@ ON public.organizations
 FOR SELECT
 USING (
   public.has_role(auth.uid(), 'admin')
-  OR is_org_owner(auth.uid(), id)
-  OR is_organization_member(auth.uid(), id)
-  OR user_has_role_in_org(auth.uid(), id)
+  OR public.is_org_owner(auth.uid(), id)
+  OR public.is_organization_member(auth.uid(), id)
+  OR public.user_has_role_in_org(auth.uid(), id)
 );
 
--- ADHERENCE METRICS TABLE (already has nutritionist policy, just add admin)
-DROP POLICY IF EXISTS "Users can view their own adherence metrics" ON public.adherence_metrics;
+-- Exemplo de política de INSERT (apenas admin cria org)
+DROP POLICY IF EXISTS "Admins can insert organizations" ON public.organizations;
+CREATE POLICY "Admins can insert organizations"
+ON public.organizations
+FOR INSERT
+WITH CHECK (public.has_role(auth.uid(), 'admin'));
 
-CREATE POLICY "Users can view their own adherence metrics"
-ON public.adherence_metrics
-FOR SELECT
+-- Exemplo de política de UPDATE (owner ou admin)
+DROP POLICY IF EXISTS "Owners or admins can update organizations" ON public.organizations;
+CREATE POLICY "Owners or admins can update organizations"
+ON public.organizations
+FOR UPDATE
 USING (
-  auth.uid() = user_id
-  OR public.has_role(auth.uid(), 'admin')
-  OR EXISTS (
-    SELECT 1 FROM public.client_assignments ca
-    WHERE ca.client_id = adherence_metrics.user_id
-    AND ca.nutritionist_id = auth.uid()
-    AND ca.active = true
-  )
+  public.has_role(auth.uid(), 'admin')
+  OR public.is_org_owner(auth.uid(), id)
 );
+
+-- Exemplo de política de DELETE (apenas admin)
+DROP POLICY IF EXISTS "Admins can delete organizations" ON public.organizations;
+CREATE POLICY "Admins can delete organizations"
+ON public.organizations
+FOR DELETE
+USING (public.has_role(auth.uid(), 'admin'));
