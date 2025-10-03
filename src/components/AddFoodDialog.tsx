@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Sparkles, Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -18,7 +18,8 @@ export const AddFoodDialog = ({ mealId, mealName, onFoodAdded }: AddFoodDialogPr
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [manualMode, setManualMode] = useState(false);
+  const [manualMode, setManualMode] = useState(true);
+  const [searchingNutrition, setSearchingNutrition] = useState(false);
   
   // Manual food entry
   const [foodName, setFoodName] = useState("");
@@ -28,27 +29,60 @@ export const AddFoodDialog = ({ mealId, mealName, onFoodAdded }: AddFoodDialogPr
   const [carbs, setCarbs] = useState("");
   const [fats, setFats] = useState("");
 
+  const searchFoodNutrition = async () => {
+    if (!foodName.trim() || !amount.trim()) {
+      toast.error("Preencha o nome do alimento e a quantidade");
+      return;
+    }
+
+    setSearchingNutrition(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-food-nutrition', {
+        body: { foodName, amount }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setCalories(data.nutrition.calories.toString());
+        setProtein(data.nutrition.protein.toString());
+        setCarbs(data.nutrition.carbs.toString());
+        setFats(data.nutrition.fats.toString());
+        toast.success("Informações nutricionais calculadas automaticamente!");
+      } else {
+        throw new Error(data.error || 'Erro ao buscar informações');
+      }
+    } catch (error: any) {
+      console.error('Error searching nutrition:', error);
+      toast.error(error.message || "Erro ao buscar informações. Tente adicionar manualmente os valores");
+    } finally {
+      setSearchingNutrition(false);
+    }
+  };
+
   const getMealSuggestions = async () => {
     setLoading(true);
     try {
-      // Get user's meal suggestions from the AI
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
       const { data, error } = await supabase
         .from('meal_suggestions')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(5);
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        setSuggestions(data);
-      } else {
-        toast.info("Nenhuma sugestão disponível. Adicione alimentos manualmente.");
-        setManualMode(true);
+      setSuggestions(data || []);
+      
+      if (!data || data.length === 0) {
+        toast.info("Nenhuma sugestão encontrada. Você pode adicionar manualmente");
       }
     } catch (error: any) {
       console.error('Error loading suggestions:', error);
-      setManualMode(true);
+      toast.error(error.message || "Erro ao carregar sugestões");
     } finally {
       setLoading(false);
     }
@@ -140,8 +174,8 @@ export const AddFoodDialog = ({ mealId, mealName, onFoodAdded }: AddFoodDialogPr
           </div>
         ) : manualMode ? (
           <div className="space-y-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold">Adicionar Manualmente</h3>
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-semibold">Adicionar Alimento</h3>
               {suggestions.length > 0 && (
                 <Button variant="ghost" size="sm" onClick={() => setManualMode(false)}>
                   <Sparkles className="w-4 h-4 mr-2" />
@@ -150,25 +184,56 @@ export const AddFoodDialog = ({ mealId, mealName, onFoodAdded }: AddFoodDialogPr
               )}
             </div>
 
+            <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                💡 <strong>Busca Inteligente:</strong> Digite o nome do alimento e a quantidade, depois clique em "Buscar com IA" para calcular automaticamente os valores nutricionais!
+              </p>
+            </div>
+
             <div className="grid gap-4">
               <div>
-                <Label htmlFor="foodName">Nome do Alimento</Label>
+                <Label htmlFor="foodName">Nome do Alimento *</Label>
                 <Input
                   id="foodName"
                   value={foodName}
                   onChange={(e) => setFoodName(e.target.value)}
-                  placeholder="Ex: Peito de frango grelhado"
+                  placeholder="Ex: Arroz integral, Frango grelhado, Banana"
                 />
               </div>
 
               <div>
-                <Label htmlFor="amount">Quantidade/Porção</Label>
+                <Label htmlFor="amount">Quantidade *</Label>
                 <Input
                   id="amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Ex: 150g, 1 unidade, 1 xícara"
+                  placeholder="Ex: 100g, 1 xícara, 2 unidades, 150ml"
                 />
+              </div>
+
+              <Button 
+                onClick={searchFoodNutrition} 
+                disabled={searchingNutrition || !foodName.trim() || !amount.trim()}
+                className="w-full"
+                variant="secondary"
+              >
+                {searchingNutrition ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Analisando alimento com IA...
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-4 h-4 mr-2" />
+                    Buscar Informações Nutricionais com IA
+                  </>
+                )}
+              </Button>
+
+              <div className="border-t pt-4">
+                <p className="text-sm text-muted-foreground mb-3">
+                  {calories ? '✓ Valores calculados automaticamente (você pode ajustar se necessário)' : 'Valores nutricionais:'}
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -217,8 +282,13 @@ export const AddFoodDialog = ({ mealId, mealName, onFoodAdded }: AddFoodDialogPr
                 </div>
               </div>
 
-              <Button onClick={addManualFood} className="w-full">
-                Adicionar Alimento
+              <Button 
+                onClick={addManualFood} 
+                disabled={!foodName || !amount || !calories}
+                className="w-full"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar ao Plano
               </Button>
             </div>
           </div>
@@ -227,10 +297,10 @@ export const AddFoodDialog = ({ mealId, mealName, onFoodAdded }: AddFoodDialogPr
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-primary" />
-                Sugestões da IA
+                Sugestões Anteriores da IA
               </h3>
               <Button variant="ghost" size="sm" onClick={() => setManualMode(true)}>
-                Adicionar Manualmente
+                Adicionar Novo
               </Button>
             </div>
 
@@ -240,7 +310,7 @@ export const AddFoodDialog = ({ mealId, mealName, onFoodAdded }: AddFoodDialogPr
                   Nenhuma sugestão disponível ainda
                 </p>
                 <Button onClick={() => setManualMode(true)}>
-                  Adicionar Manualmente
+                  Adicionar Alimento
                 </Button>
               </div>
             ) : (
