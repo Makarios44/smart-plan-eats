@@ -32,8 +32,13 @@ Dados do Usuário:
 - Objetivo: ${userProfile.goal === 'lose' ? 'Emagrecer' : userProfile.goal === 'gain' ? 'Ganhar massa muscular' : 'Manter peso'}
 - Nível de atividade: ${userProfile.activity_level}
 - Tipo de trabalho: ${userProfile.work_type}
+${userProfile.lifestyle_routine ? `- Rotina diária: ${userProfile.lifestyle_routine}` : ''}
+- Refeições por dia: ${userProfile.meals_per_day || '4-5 refeições'}
 - Tipo de dieta: ${userProfile.diet_type || 'sem restrições'}
-- Restrições alimentares: ${userProfile.restrictions.length > 0 ? userProfile.restrictions.join(', ') : 'nenhuma'}
+- Restrições alimentares: ${userProfile.dietary_restrictions?.length > 0 ? userProfile.dietary_restrictions.join(', ') : 'nenhuma'}
+- Alergias: ${userProfile.food_allergies?.length > 0 ? userProfile.food_allergies.join(', ') : 'nenhuma'}
+${userProfile.disliked_foods ? `- Alimentos que não gosta: ${userProfile.disliked_foods}` : ''}
+- Cozinhas preferidas: ${userProfile.preferred_cuisines?.length > 0 ? userProfile.preferred_cuisines.join(', ') : 'variada'}
 
 Metas Nutricionais:
 - Calorias diárias: ${userProfile.target_calories} kcal
@@ -41,7 +46,7 @@ Metas Nutricionais:
 - Carboidratos: ${userProfile.target_carbs}g
 - Gorduras: ${userProfile.target_fats}g
 
-Por favor, crie um plano alimentar completo com 5 refeições (Café da Manhã às 07:30, Lanche da Manhã às 10:00, Almoço às 12:30, Lanche da Tarde às 16:00, e Jantar às 19:30).
+Por favor, crie um plano alimentar completo com 5 refeições (Café da Manhã às 07:30, Lanche da Manhã às 10:00, Almoço às 12:30, Lanche da Tarde às 16:00, e Jantar às 19:30), respeitando TODAS as restrições, alergias e preferências do usuário.
 
 Para cada refeição, liste de 3 a 5 alimentos com:
 - Nome do alimento

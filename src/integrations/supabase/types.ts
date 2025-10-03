@@ -266,11 +266,18 @@ export type Database = {
           age: number
           created_at: string | null
           diet_type: string | null
+          dietary_restrictions: Json | null
+          disliked_foods: string | null
+          food_allergies: Json | null
           gender: string
           goal: string
           height: number
           id: string
+          lifestyle_routine: string | null
+          meals_per_day: string | null
           name: string
+          phone: string | null
+          preferred_cuisines: Json | null
           restrictions: Json | null
           target_calories: number
           target_carbs: number
@@ -287,11 +294,18 @@ export type Database = {
           age: number
           created_at?: string | null
           diet_type?: string | null
+          dietary_restrictions?: Json | null
+          disliked_foods?: string | null
+          food_allergies?: Json | null
           gender: string
           goal: string
           height: number
           id?: string
+          lifestyle_routine?: string | null
+          meals_per_day?: string | null
           name: string
+          phone?: string | null
+          preferred_cuisines?: Json | null
           restrictions?: Json | null
           target_calories: number
           target_carbs: number
@@ -308,11 +322,18 @@ export type Database = {
           age?: number
           created_at?: string | null
           diet_type?: string | null
+          dietary_restrictions?: Json | null
+          disliked_foods?: string | null
+          food_allergies?: Json | null
           gender?: string
           goal?: string
           height?: number
           id?: string
+          lifestyle_routine?: string | null
+          meals_per_day?: string | null
           name?: string
+          phone?: string | null
+          preferred_cuisines?: Json | null
           restrictions?: Json | null
           target_calories?: number
           target_carbs?: number

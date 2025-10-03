@@ -62,7 +62,12 @@ Alimento Original: ${foodToReplace}
 
 Contexto do Usuário:
 - Objetivo: ${profile.goal === 'lose' ? 'Emagrecimento' : profile.goal === 'gain' ? 'Ganho de massa' : 'Manutenção'}
-- Restrições Alimentares: ${restrictions.length > 0 ? restrictions.join(', ') : 'Nenhuma'}
+${profile.lifestyle_routine ? `- Rotina: ${profile.lifestyle_routine}` : ''}
+- Refeições por dia: ${profile.meals_per_day || '4-5'}
+- Restrições Alimentares: ${profile.dietary_restrictions?.length > 0 ? profile.dietary_restrictions.join(', ') : 'Nenhuma'}
+- Alergias: ${profile.food_allergies?.length > 0 ? profile.food_allergies.join(', ') : 'Nenhuma'}
+${profile.disliked_foods ? `- Alimentos que não gosta: ${profile.disliked_foods}` : ''}
+- Cozinhas preferidas: ${profile.preferred_cuisines?.length > 0 ? profile.preferred_cuisines.join(', ') : 'Variada'}
 - Alimentos Disponíveis na Despensa: ${availableFoods || 'Não informado'}
 
 Por favor, sugira 3 substituições equivalentes nutricionalmente, priorizando:
@@ -97,7 +102,12 @@ Macros Restantes do Dia:
 Contexto do Usuário:
 - Objetivo: ${profile.goal === 'lose' ? 'Emagrecimento' : profile.goal === 'gain' ? 'Ganho de massa' : 'Manutenção'}
 - Tipo de Dieta: ${profile.diet_type || 'Sem restrições'}
-- Restrições Alimentares: ${restrictions.length > 0 ? restrictions.join(', ') : 'Nenhuma'}
+${profile.lifestyle_routine ? `- Rotina: ${profile.lifestyle_routine}` : ''}
+- Refeições por dia: ${profile.meals_per_day || '4-5'}
+- Restrições Alimentares: ${profile.dietary_restrictions?.length > 0 ? profile.dietary_restrictions.join(', ') : 'Nenhuma'}
+- Alergias: ${profile.food_allergies?.length > 0 ? profile.food_allergies.join(', ') : 'Nenhuma'}
+${profile.disliked_foods ? `- Alimentos que não gosta: ${profile.disliked_foods}` : ''}
+- Cozinhas preferidas: ${profile.preferred_cuisines?.length > 0 ? profile.preferred_cuisines.join(', ') : 'Variada'}
 - Alimentos Disponíveis: ${availableFoods || 'Considere ingredientes comuns'}
 
 Crie uma refeição criativa, saborosa e nutritiva que:
