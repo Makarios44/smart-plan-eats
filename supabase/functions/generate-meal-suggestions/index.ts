@@ -206,15 +206,13 @@ Retorne APENAS um JSON válido no seguinte formato (sem markdown, sem explicaç�
       );
     }
 
-    // CORREÇÃO: Definir valores válidos para as constraints
-    // Baseado no erro, parece que 'sugestao_geral' não é válido para 'original_food'
-    // Vamos usar valores mais genéricos que provavelmente passarão
+    // CORREÇÃO: Usar valores válidos conforme o check constraint da tabela
+    // suggestion_type deve ser 'substitution' ou 'creative_meal'
+    // Como estamos gerando refeições criativas completas, usamos 'creative_meal'
+    const validSuggestionType = 'creative_meal';
     
-    // Para suggestion_type - usar 'meal' que parece ser válido
-    const validSuggestionType = 'meal';
-    
-    // Para original_food - usar valores mais simples
-    const validOriginalFood = hasPantryItems ? 'pantry' : 'general';
+    // Para original_food - null já que não estamos substituindo um alimento específico
+    const validOriginalFood = null;
 
     console.log('Using values - suggestion_type:', validSuggestionType, 'original_food:', validOriginalFood);
 
