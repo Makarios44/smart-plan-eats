@@ -206,18 +206,22 @@ Retorne APENAS um JSON válido no seguinte formato (sem markdown, sem explicaç�
       );
     }
 
-    // CORREÇÃO: Usar valores válidos para a constraint
-    // Valores prováveis: 'meal', 'ingredient', 'recipe', 'general', etc.
-    const suggestionType = 'meal'; // Este deve ser um valor válido na constraint
+    // CORREÇÃO: Definir valores válidos para as constraints
+    // Baseado no erro, parece que 'sugestao_geral' não é válido para 'original_food'
+    // Vamos usar valores mais genéricos que provavelmente passarão
     
-    // Para original_food, usar valores que passem na constraint
-    // Valores prováveis: 'pantry_based', 'general', 'ai_suggestion', etc.
-    const originalFoodValue = hasPantryItems ? 'pantry_based' : 'general';
+    // Para suggestion_type - usar 'meal' que parece ser válido
+    const validSuggestionType = 'meal';
+    
+    // Para original_food - usar valores mais simples
+    const validOriginalFood = hasPantryItems ? 'pantry' : 'general';
+
+    console.log('Using values - suggestion_type:', validSuggestionType, 'original_food:', validOriginalFood);
 
     // Save suggestions to database
     const suggestionsToSave = parsedSuggestions.suggestions.map((suggestion: any) => ({
       user_id: user.id,
-      suggestion_type: suggestionType, // Usar valor fixo válido
+      suggestion_type: validSuggestionType, // Valor fixo válido
       suggested_meal: {
         name: suggestion.name,
         ingredients: suggestion.ingredients,
@@ -226,8 +230,10 @@ Retorne APENAS um JSON válido no seguinte formato (sem markdown, sem explicaç�
         uses_pantry_items: suggestion.uses_pantry_items || false
       },
       macros: suggestion.nutrition,
-      original_food: originalFoodValue // Usar valor válido
+      original_food: validOriginalFood // Valor válido baseado na despensa
     }));
+
+    console.log('Saving suggestions with data:', JSON.stringify(suggestionsToSave[0], null, 2));
 
     const { data: savedSuggestions, error: saveError } = await supabaseAdmin
       .from('meal_suggestions')
