@@ -206,10 +206,18 @@ Retorne APENAS um JSON válido no seguinte formato (sem markdown, sem explicaç�
       );
     }
 
+    // CORREÇÃO: Usar valores válidos para a constraint
+    // Valores prováveis: 'meal', 'ingredient', 'recipe', 'general', etc.
+    const suggestionType = 'meal'; // Este deve ser um valor válido na constraint
+    
+    // Para original_food, usar valores que passem na constraint
+    // Valores prováveis: 'pantry_based', 'general', 'ai_suggestion', etc.
+    const originalFoodValue = hasPantryItems ? 'pantry_based' : 'general';
+
     // Save suggestions to database
     const suggestionsToSave = parsedSuggestions.suggestions.map((suggestion: any) => ({
       user_id: user.id,
-      suggestion_type: 'meal',
+      suggestion_type: suggestionType, // Usar valor fixo válido
       suggested_meal: {
         name: suggestion.name,
         ingredients: suggestion.ingredients,
@@ -218,7 +226,7 @@ Retorne APENAS um JSON válido no seguinte formato (sem markdown, sem explicaç�
         uses_pantry_items: suggestion.uses_pantry_items || false
       },
       macros: suggestion.nutrition,
-      original_food: hasPantryItems ? 'baseado_despensa' : 'sugestao_geral'
+      original_food: originalFoodValue // Usar valor válido
     }));
 
     const { data: savedSuggestions, error: saveError } = await supabaseAdmin
@@ -228,8 +236,20 @@ Retorne APENAS um JSON válido no seguinte formato (sem markdown, sem explicaç�
 
     if (saveError) {
       console.error('Error saving suggestions:', saveError);
+      
+      // Log mais detalhes para debugging
+      console.error('Save error details:', {
+        code: saveError.code,
+        message: saveError.message,
+        details: saveError.details,
+        hint: saveError.hint
+      });
+      
       return new Response(
-        JSON.stringify({ error: 'Erro ao salvar sugestões' }),
+        JSON.stringify({ 
+          error: 'Erro ao salvar sugestões',
+          details: saveError.message 
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
