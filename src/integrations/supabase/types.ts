@@ -103,6 +103,72 @@ export type Database = {
           },
         ]
       }
+      food_database: {
+        Row: {
+          barcode: string | null
+          brand: string | null
+          calories: number
+          carbs: number
+          category: string | null
+          created_at: string | null
+          created_by_user_id: string | null
+          fats: number
+          fiber: number | null
+          food_name: string
+          food_name_normalized: string
+          id: string
+          image_url: string | null
+          is_verified: boolean | null
+          protein: number
+          sodium: number | null
+          source: string
+          source_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          barcode?: string | null
+          brand?: string | null
+          calories: number
+          carbs: number
+          category?: string | null
+          created_at?: string | null
+          created_by_user_id?: string | null
+          fats: number
+          fiber?: number | null
+          food_name: string
+          food_name_normalized: string
+          id?: string
+          image_url?: string | null
+          is_verified?: boolean | null
+          protein: number
+          sodium?: number | null
+          source: string
+          source_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          barcode?: string | null
+          brand?: string | null
+          calories?: number
+          carbs?: number
+          category?: string | null
+          created_at?: string | null
+          created_by_user_id?: string | null
+          fats?: number
+          fiber?: number | null
+          food_name?: string
+          food_name_normalized?: string
+          id?: string
+          image_url?: string | null
+          is_verified?: boolean | null
+          protein?: number
+          sodium?: number | null
+          source?: string
+          source_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       food_items: {
         Row: {
           amount: string
@@ -472,7 +538,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      normalize_food_name: {
+        Args: { name: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
