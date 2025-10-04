@@ -1,5 +1,8 @@
 project_id = "qtsxwyekivsnjdlpwdjl"
 
+[functions.get-food-nutrition]
+verify_jwt = true
+
 [functions.create-diet-plan]
 verify_jwt = true
 

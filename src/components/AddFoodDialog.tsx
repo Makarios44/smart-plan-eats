@@ -3,10 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Sparkles, Loader2, Search } from "lucide-react";
+import { Plus, Sparkles, Loader2, Search, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
+import { AddCustomFoodDialog } from "./AddCustomFoodDialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AddFoodDialogProps {
   mealId: string;
@@ -20,6 +22,9 @@ export const AddFoodDialog = ({ mealId, mealName, onFoodAdded }: AddFoodDialogPr
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [manualMode, setManualMode] = useState(true);
   const [searchingNutrition, setSearchingNutrition] = useState(false);
+  const [showCustomFoodDialog, setShowCustomFoodDialog] = useState(false);
+  const [nutritionSource, setNutritionSource] = useState<string | null>(null);
+  const [isEstimate, setIsEstimate] = useState(false);
   
   // Manual food entry
   const [foodName, setFoodName] = useState("");
@@ -48,7 +53,16 @@ export const AddFoodDialog = ({ mealId, mealName, onFoodAdded }: AddFoodDialogPr
         setProtein(data.nutrition.protein.toString());
         setCarbs(data.nutrition.carbs.toString());
         setFats(data.nutrition.fats.toString());
-        toast.success("Informações nutricionais calculadas automaticamente!");
+        setNutritionSource(data.source);
+        setIsEstimate(data.isEstimate || false);
+        
+        const sourceMsg = data.source === 'open_food_facts' 
+          ? "Dados obtidos do Open Food Facts ✓" 
+          : data.isEstimate 
+            ? "⚠️ Estimativa da IA - Considere cadastrar este alimento manualmente"
+            : "Informações nutricionais encontradas!";
+        
+        toast.success(sourceMsg);
       } else {
         throw new Error(data.error || 'Erro ao buscar informações');
       }
@@ -230,9 +244,26 @@ export const AddFoodDialog = ({ mealId, mealName, onFoodAdded }: AddFoodDialogPr
                 )}
               </Button>
 
+              {isEstimate && calories && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Dados estimados pela IA. Alimento não encontrado nas bases de dados.
+                    <Button 
+                      variant="link" 
+                      className="p-0 h-auto ml-2 text-destructive underline"
+                      onClick={() => setShowCustomFoodDialog(true)}
+                    >
+                      Cadastrar alimento manualmente
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="border-t pt-4">
                 <p className="text-sm text-muted-foreground mb-3">
-                  {calories ? '✓ Valores calculados automaticamente (você pode ajustar se necessário)' : 'Valores nutricionais:'}
+                  {calories ? '✓ Valores calculados (você pode ajustar se necessário)' : 'Valores nutricionais:'}
+                  {nutritionSource === 'open_food_facts' && ' - Fonte: Open Food Facts'}
                 </p>
               </div>
 
@@ -358,6 +389,14 @@ export const AddFoodDialog = ({ mealId, mealName, onFoodAdded }: AddFoodDialogPr
           </div>
         )}
       </DialogContent>
+      
+      <AddCustomFoodDialog 
+        open={showCustomFoodDialog}
+        onOpenChange={setShowCustomFoodDialog}
+        onFoodAdded={() => {
+          toast.success("Alimento cadastrado! Agora você pode usá-lo em seus planos.");
+        }}
+      />
     </Dialog>
   );
 };
